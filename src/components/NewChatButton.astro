@@ -1,0 +1,39 @@
+---
+---
+<div class="wrapper">
+	<button class="new-chat-btn">
+		<span class="material-symbols-outlined">add</span>
+		<span>New Chat</span>
+	</button>
+</div>
+
+<style>
+	.wrapper {
+		padding: 0 16px 16px;
+	}
+	.new-chat-btn {
+		display: flex;
+		width: 100%;
+		cursor: pointer;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		height: 40px;
+		padding: 0 16px;
+		border-radius: 8px;
+		border: none;
+		background: var(--color-primary);
+		color: #fff;
+		font-size: 14px;
+		font-weight: 700;
+		font-family: 'Inter', sans-serif;
+		box-shadow: 0 8px 16px rgba(43, 140, 238, 0.2);
+		transition: background-color 0.15s;
+	}
+	.new-chat-btn:hover {
+		background: rgba(43, 140, 238, 0.9);
+	}
+	.new-chat-btn .material-symbols-outlined {
+		font-size: 20px;
+	}
+</style>

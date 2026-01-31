@@ -1,0 +1,125 @@
+---
+---
+<header class="chat-header">
+	<div class="left">
+		<h2>
+			<span class="material-symbols-outlined star-icon">auto_awesome</span>
+			React Component Design
+		</h2>
+		<span class="badge">Model v4.0</span>
+	</div>
+	<div class="right">
+		<button class="fav-btn">
+			<span class="material-symbols-outlined heart-icon">favorite</span>
+			<span class="fav-text">Favorite Chats</span>
+		</button>
+		<div class="divider"></div>
+		<button class="signin-btn">Sign In</button>
+	</div>
+</header>
+
+<style>
+	.chat-header {
+		height: 64px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-bottom: 1px solid var(--color-border);
+		padding: 0 24px;
+		background: rgba(16, 25, 34, 0.8);
+		backdrop-filter: blur(12px);
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		flex-shrink: 0;
+	}
+	.left {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+	h2 {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 600;
+		color: var(--color-text);
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.star-icon {
+		color: var(--color-primary);
+	}
+	.badge {
+		padding: 2px 8px;
+		border-radius: 9999px;
+		background: var(--color-surface);
+		font-size: 10px;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+	.right {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	.fav-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		height: 36px;
+		padding: 0 16px;
+		border-radius: 8px;
+		background: var(--color-surface);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		color: var(--color-text);
+		font-size: 14px;
+		font-weight: 500;
+		font-family: 'Inter', sans-serif;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+	.fav-btn:hover {
+		background: var(--color-surface-hover);
+	}
+	.heart-icon {
+		font-size: 18px;
+		color: #ec4899;
+	}
+	.divider {
+		width: 1px;
+		height: 24px;
+		background: var(--color-border);
+		margin: 0 4px;
+	}
+	.signin-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 36px;
+		padding: 0 16px;
+		border-radius: 8px;
+		background: var(--color-primary);
+		border: none;
+		color: #fff;
+		font-size: 14px;
+		font-weight: 700;
+		font-family: 'Inter', sans-serif;
+		cursor: pointer;
+		box-shadow: 0 8px 16px rgba(43, 140, 238, 0.2);
+		transition: background-color 0.15s;
+	}
+	.signin-btn:hover {
+		background: rgba(43, 140, 238, 0.9);
+	}
+	.fav-text {
+		display: none;
+	}
+	@media (min-width: 640px) {
+		.fav-text {
+			display: inline;
+		}
+	}
+</style>

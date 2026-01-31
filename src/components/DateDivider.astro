@@ -1,0 +1,25 @@
+---
+interface Props {
+	text: string;
+}
+const { text } = Astro.props;
+---
+<div class="date-divider">
+	<span>{text}</span>
+</div>
+
+<style>
+	.date-divider {
+		display: flex;
+		justify-content: center;
+	}
+	span {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--color-text-muted);
+		background: var(--color-surface);
+		padding: 4px 12px;
+		border-radius: 9999px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+</style>

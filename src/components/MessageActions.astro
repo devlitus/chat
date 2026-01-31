@@ -1,0 +1,44 @@
+---
+---
+<div class="message-actions">
+	<button title="Copy">
+		<span class="material-symbols-outlined">content_copy</span>
+	</button>
+	<button title="Regenerate">
+		<span class="material-symbols-outlined">refresh</span>
+	</button>
+	<button title="Good response">
+		<span class="material-symbols-outlined">thumb_up</span>
+	</button>
+	<button title="Bad response">
+		<span class="material-symbols-outlined">thumb_down</span>
+	</button>
+</div>
+
+<style>
+	.message-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 4px;
+		margin-left: 8px;
+	}
+	button {
+		background: none;
+		border: none;
+		color: var(--color-text-muted);
+		cursor: pointer;
+		padding: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 4px;
+		transition: color 0.15s;
+	}
+	button:hover {
+		color: var(--color-text);
+	}
+	button .material-symbols-outlined {
+		font-size: 18px;
+	}
+</style>

@@ -1,0 +1,27 @@
+---
+interface Props {
+	label: string;
+}
+const { label } = Astro.props;
+---
+<div class="group">
+	<h3>{label}</h3>
+	<slot />
+</div>
+
+<style>
+	.group {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	h3 {
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 8px 16px 4px;
+		margin: 0;
+	}
+</style>

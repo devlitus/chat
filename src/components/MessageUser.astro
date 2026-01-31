@@ -1,0 +1,80 @@
+---
+interface Props {
+	time: string;
+}
+const { time } = Astro.props;
+---
+<div class="message-user">
+	<div class="avatar">
+		<img
+			src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ-6lcSD0NtbpkMCSi_dt3A3sXOZqNohj_2c8WCmD9CBfdtyUmYmzDgfU0rWMgZtwoOos664mCpSEzY5OD-4wKHt7fZo3fZmSgVRNXKE3ISb3aZ26FX_3AYHXETROhZoDdsSSCuTiyKTERcqCaGaSKGteNa3xt4dnbWITwkA0v7Aouu8geRhFMAJZ1X6ncX6HAdZ_PPOu97toDZ_uffgUqbVVQZu6NIYf1dp2NR9wbMcmKWc0hD-Eka2PnsaTbegKIfgahS3mAFXuJ"
+			alt="Avatar de usuario"
+		/>
+	</div>
+	<div class="content">
+		<div class="meta">
+			<span class="time">{time}</span>
+			<span class="name">You</span>
+		</div>
+		<div class="bubble">
+			<slot />
+		</div>
+	</div>
+</div>
+
+<style>
+	.message-user {
+		display: flex;
+		flex-direction: row-reverse;
+		gap: 16px;
+		max-width: 768px;
+		margin: 0 auto;
+	}
+	.avatar {
+		width: 32px;
+		height: 32px;
+		flex-shrink: 0;
+		border-radius: 50%;
+		background: #334155;
+		overflow: hidden;
+		margin-top: 4px;
+	}
+	.avatar img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		align-items: flex-end;
+		flex: 1;
+		min-width: 0;
+	}
+	.meta {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+	}
+	.time {
+		font-size: 12px;
+		color: var(--color-text-muted);
+	}
+	.name {
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--color-text);
+	}
+	.bubble {
+		color: #fff;
+		font-size: 16px;
+		line-height: 1.625;
+		background: var(--color-primary);
+		padding: 16px;
+		border-radius: 16px;
+		border-top-right-radius: 0;
+		box-shadow: 0 4px 6px rgba(43, 140, 238, 0.1);
+		width: fit-content;
+	}
+</style>

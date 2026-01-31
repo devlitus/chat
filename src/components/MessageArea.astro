@@ -1,0 +1,60 @@
+---
+import DateDivider from './DateDivider.astro';
+import MessageBot from './MessageBot.astro';
+import MessageUser from './MessageUser.astro';
+import CodeBlock from './CodeBlock.astro';
+import SuggestionChips from './SuggestionChips.astro';
+import MessageActions from './MessageActions.astro';
+
+const codeExample = `&lt;div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 relative"&gt;
+  &lt;div class="flex justify-between items-start mb-4"&gt;
+    &lt;div&gt;
+      &lt;h3 class="text-slate-500 text-sm font-medium"&gt;Total Revenue&lt;/h3&gt;
+      &lt;p class="text-2xl font-bold text-slate-900 dark:text-white"&gt;$45,231.89&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;MenuDropdown /&gt;
+  &lt;/div&gt;
+  &lt;div class="h-32"&gt;
+    &lt;LineChart data={data} /&gt;
+  &lt;/div&gt;
+&lt;/div&gt;`;
+---
+<div class="message-area">
+	<DateDivider text="Today, 10:23 AM" />
+
+	<MessageBot name="Chat AI" time="10:23 AM">
+		<p>Hello! I'm ready to help you with your React component design. What specific functionality or visual style are you aiming for in this component?</p>
+	</MessageBot>
+
+	<MessageUser time="10:24 AM">
+		<p>I need a responsive card component for a dashboard. It should display a chart, some stats, and have a dropdown menu for actions.</p>
+	</MessageUser>
+
+	<MessageBot name="Chat AI" time="10:25 AM">
+		<p>Got it. A responsive dashboard card with a chart, stats, and actions menu. Here is a conceptual structure using Tailwind CSS and a hypothetical charting library wrapper:</p>
+		<CodeBlock filename="DashboardCard.tsx" code={codeExample} />
+		<p>Would you like me to detail the `MenuDropdown` component as well?</p>
+		<SuggestionChips />
+		<MessageActions />
+	</MessageBot>
+
+	<div class="spacer"></div>
+</div>
+
+<style>
+	.message-area {
+		flex: 1;
+		overflow-y: auto;
+		padding: 16px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+		scroll-behavior: smooth;
+	}
+	.spacer {
+		height: 16px;
+	}
+	p {
+		margin: 0;
+	}
+</style>
