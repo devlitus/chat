@@ -35,3 +35,7 @@ Este proyecto usa dos subagentes especializados con un flujo secuencial:
 
 1. Usar el agente **planner** para analizar requisitos y escribir el plan de diseño en `docs/`.
 2. Usar el agente **implementer** para implementar el plan generado.
+
+### referencias de documentación
+
+- [GROQ — Quickstart](https://console.groq.com/docs/quickstart)
