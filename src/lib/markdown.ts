@@ -7,9 +7,20 @@ marked.setOptions({
   gfm: true,
 });
 
+function sanitizeHtml(html: string): string {
+  // Remover tags peligrosos (script, iframe, object, embed)
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, (match) => {
+      return match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    })
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, (match) => {
+      return match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    });
+}
+
 export function renderMarkdown(content: string): string {
   const html = marked.parse(content) as string;
-  return html;
+  return sanitizeHtml(html);
 }
 
 export function renderStreamingMarkdown(accumulatedContent: string): string {
