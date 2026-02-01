@@ -1,0 +1,82 @@
+// src/pages/api/chat.ts
+
+import type { APIRoute } from 'astro';
+import Groq from 'groq-sdk';
+
+export const prerender = false;
+
+const groq = new Groq({
+  apiKey: import.meta.env.GROQ_API_KEY,
+});
+
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json();
+    const { messages } = body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'Messages array is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    for (const msg of messages) {
+      if (!msg.role || !msg.content || !['user', 'assistant'].includes(msg.role)) {
+        return new Response(JSON.stringify({ error: 'Invalid message format' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'Eres un asistente de IA util y amigable. Responde de forma clara y concisa. Puedes usar Markdown para formatear tus respuestas.',
+        },
+        ...messages.map((m: { role: string; content: string }) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
+      ],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 2048,
+      stream: true,
+    });
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        try {
+          for await (const chunk of chatCompletion) {
+            const data = JSON.stringify(chunk);
+            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: errorMsg })}\n\n`));
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
