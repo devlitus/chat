@@ -1,46 +1,112 @@
-# Astro Starter Kit: Basics
+# Chat AI - Aplicación de Chat con IA
 
-```sh
-pnpm create astro@latest -- --template basics
+Una aplicación web moderna de chat con IA construida con **Astro 5**, **React**, y **Groq API**. MVP funcional con persistencia local, streaming en tiempo real y diseño responsivo.
+
+![Chat AI Interface](./stitch_chatbot_interface/screen.png)
+
+## ✨ Características
+
+- 🤖 **Chat con IA en tiempo real** - Streaming de respuestas con Groq API
+- 💾 **Persistencia local** - IndexedDB para chats y mensajes (sin servidor)
+- 🎨 **Interfaz moderna** - Diseño profesional con CSS global
+- ⚡ **Performance** - Server-side rendering + React island optimization
+- 📝 **Markdown support** - Respuestas formateadas con soporte para código
+- 🔍 **Búsqueda** - Busca en tu historial de chats
+- 🧪 **49 unit tests** - Cobertura completa con Vitest
+
+## 🚀 Quick Start
+
+### Requisitos
+- Node.js 18+
+- pnpm (o npm/yarn)
+- [GROQ API Key](https://console.groq.com/)
+
+### Instalación
+
+```bash
+git clone <repository-url>
+cd chat
+pnpm install
+echo "GROQ_API_KEY=your-api-key-here" > .env
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+### Desarrollo
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+```bash
+pnpm dev        # Dev server
+pnpm test:watch # Tests en vivo
+pnpm test:ui    # UI visual
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## 📁 Estructura
 
-## 🧞 Commands
+```
+chat/
+├── src/
+│   ├── components/react/    # Componentes React interactivos
+│   ├── lib/                 # Utilidades (db, session, markdown)
+│   ├── pages/               # Rutas y API endpoints
+│   └── layouts/             # Layouts Astro
+├── docs/                    # Documentación de diseño
+├── vitest.config.ts         # Tests configuration
+└── astro.config.mjs         # Astro configuration
+```
 
-All commands are run from the root of the project, from a terminal:
+## 🧪 Testing
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+49 unit tests con Vitest:
 
-## 👀 Want to learn more?
+```bash
+pnpm test              # Ejecutar tests
+pnpm test:watch        # Modo watch
+pnpm test:ui           # Interfaz visual
+pnpm test:coverage     # Reporte de cobertura
+```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+**Cobertura:**
+- session.ts - 11 tests
+- markdown.ts - 11 tests
+- db.ts - 21 tests
+- api/chat.ts - 6 tests
+
+## 🏗️ Stack Técnico
+
+| Componente | Tecnología |
+|-----------|-----------|
+| Framework | Astro 5 |
+| UI | React 19 |
+| Estado | Context + useReducer |
+| Persistencia | IndexedDB |
+| IA | Groq API |
+| Testing | Vitest + happy-dom |
+| CSS | Plain CSS |
+
+## 🔧 Comandos
+
+```bash
+pnpm dev               # Servidor de desarrollo
+pnpm build             # Build de producción
+pnpm test              # Ejecutar todos los tests
+pnpm test:watch        # Tests en watch mode
+pnpm test:ui           # UI visual de tests
+```
+
+## 📚 Documentación
+
+- [plan-implementacion-tecnico.md](./docs/plan-implementacion-tecnico.md) - Arquitectura
+- [plan-testing-vitest.md](./docs/plan-testing-vitest.md) - Testing
+- [CLAUDE.md](./CLAUDE.md) - Guía
+
+## 🚦 Estado
+
+**MVP Completo** ✅
+- [x] Chat con IA
+- [x] Persistencia local
+- [x] 49 unit tests
+- [x] Streaming en tiempo real
+- [x] Búsqueda en historial
+- [x] Documentación
+
+---
+
+Desarrollado con [Claude Code](https://claude.com/claude-code)
