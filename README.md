@@ -17,6 +17,7 @@ Una aplicación web moderna de chat con IA construida con **Astro 5**, **React**
 ## 🚀 Quick Start
 
 ### Requisitos
+
 - Node.js 18+
 - pnpm (o npm/yarn)
 - [GROQ API Key](https://console.groq.com/)
@@ -40,7 +41,7 @@ pnpm test:ui    # UI visual
 
 ## 📁 Estructura
 
-```
+```text
 chat/
 ├── src/
 │   ├── components/react/    # Componentes React interactivos
@@ -64,6 +65,7 @@ pnpm test:coverage     # Reporte de cobertura
 ```
 
 **Cobertura:**
+
 - session.ts - 11 tests
 - markdown.ts - 11 tests
 - db.ts - 21 tests
@@ -100,6 +102,7 @@ pnpm test:ui           # UI visual de tests
 ## 🚦 Estado
 
 **MVP Completo** ✅
+
 - [x] Chat con IA
 - [x] Persistencia local
 - [x] 49 unit tests
@@ -109,4 +112,4 @@ pnpm test:ui           # UI visual de tests
 
 ---
 
-Desarrollado con [Claude Code](https://claude.com/claude-code)
+Desarrollado por [devlitu](https://github.com/devlitus) - ¡Contribuciones bienvenidas!
