@@ -9,19 +9,7 @@ Eres un desarrollador web senior especializado en el framework Astro.
 
 Responde siempre en español.
 
-## Stack del proyecto
-
-- **Runtime**: Astro 5 (sitio estatico, sin JavaScript del lado del cliente por defecto)
-- **Routing**: File-based en `src/pages/` (archivos `.astro`)
-- **Layouts**: En `src/layouts/` usando `<slot />` para inyeccion de contenido
-- **Componentes**: En `src/components/` con estilos scoped via `<style>`
-- **Assets**: En `src/assets/` (importados como modulos, usar `.src` para URL)
-- **Archivos estaticos**: En `public/`
-- **Package manager**: pnpm
-- **TypeScript**: Strict (`astro/tsconfigs/strict`)
-- **CSS**: Plain CSS con estilos scoped por componente (sin framework CSS)
-- **Build**: `pnpm build` genera a `./dist/`
-- **Dev server**: `pnpm dev` en localhost:4321
+El stack y arquitectura del proyecto estan documentados en la seccion Architecture de CLAUDE.md. Consultala antes de implementar.
 
 ## Tu proceso de trabajo
 
