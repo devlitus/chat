@@ -37,6 +37,32 @@ Astro 5 project with React integration and server-side rendering (SSR mode with 
 
 Uses pnpm, ES modules, and strict TypeScript (`astro/tsconfigs/strict`). Plain CSS with global styles. React for interactive chat UI with Context-based state management.
 
+## Modelo LLM
+
+- Proveedor: **Groq** vía `groq-sdk`
+- Modelo actual: `openai/gpt-oss-20b` (modelo de razonamiento)
+- Configurado en `src/pages/api/chat.ts` con `reasoning_effort: 'low'` y `stream: true`
+- Los chunks de razonamiento (`reasoning_content`) se ignoran en el cliente: `groq-client.ts` solo emite `parsed.choices?.[0]?.delta?.content`. El spinner es visible mientras el modelo razona.
+
+## Sistema MCP (Model Context Protocol)
+
+Integración experimental de MCP dentro del chat para renderizar UIs interactivas en burbujas del asistente.
+
+### Archivos clave
+
+- `src/pages/api/mcp.ts` — Endpoint POST/OPTIONS del servidor MCP usando `@modelcontextprotocol/sdk`. Registra la herramienta `get-time` con `registerAppTool` de `@modelcontextprotocol/ext-apps/server`. Usa un mock de Express (`reqMock`/`resMock`) para compatibilizar `StreamableHTTPServerTransport` con Astro SSR.
+- `src/pages/mcp-app.astro` — Página standalone (cargada en iframe) que monta `McpClientApp`. Usa Tailwind CDN y fuentes de Google. No tiene layout propio.
+- `src/components/mcp/McpClientApp.tsx` — React component del cliente MCP. Se comunica con el host padre via `window.postMessage` usando el protocolo interno `mcp_call_tool` / `mcp_tool_result`.
+
+### Protocolo host ↔ iframe
+
+| Dirección | `type` | Datos |
+|---|---|---|
+| Iframe → Host | `mcp_call_tool` | `{ toolName: 'get-time' }` |
+| Host → Iframe | `mcp_tool_result` | `{ toolName: 'get-time', time: ISOString }` |
+
+El host maneja los mensajes en `MessageBubble.tsx`. Si un mensaje del asistente tiene `uiResourceUri`, se renderiza el iframe en lugar de HTML markdown.
+
 ## Agentes
 
 Este proyecto usa dos subagentes especializados con un flujo secuencial:
@@ -52,3 +78,4 @@ Este proyecto usa dos subagentes especializados con un flujo secuencial:
 ### referencias de documentación
 
 - [GROQ — Quickstart](https://console.groq.com/docs/quickstart)
+- [MCP SDK — TypeScript](https://github.com/modelcontextprotocol/typescript-sdk)

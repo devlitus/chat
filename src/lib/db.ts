@@ -17,6 +17,7 @@ export interface Message {
   chatId: string;
   role: 'user' | 'assistant';
   content: string;
+  uiResourceUri?: string; // Almacenará la URI visual del servidor MCP
   createdAt: string;
 }
 
@@ -131,13 +132,14 @@ export async function searchChats(query: string): Promise<Chat[]> {
 // CRUD de Messages
 // ============================================================
 
-export async function addMessage(chatId: string, role: 'user' | 'assistant', content: string): Promise<Message> {
+export async function addMessage(chatId: string, role: 'user' | 'assistant', content: string, uiResourceUri?: string): Promise<Message> {
   const now = new Date().toISOString();
   const message: Message = {
     id: crypto.randomUUID(),
     chatId,
     role,
     content,
+    uiResourceUri,
     createdAt: now,
   };
   await withStore('messages', 'readwrite', (store) => store.add(message));

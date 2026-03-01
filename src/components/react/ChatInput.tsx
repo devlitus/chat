@@ -43,7 +43,7 @@ export function ChatInput() {
       const allMessages = await getMessagesByChatId(activeChatId);
       const history = allMessages.map((m) => ({ role: m.role, content: m.content }));
 
-      // 4. Streaming
+      // 4. Streaming + detección de widget por marcador del modelo
       dispatch({ type: 'START_STREAMING' });
 
       let fullContent = '';
@@ -52,8 +52,36 @@ export function ChatInput() {
         dispatch({ type: 'UPDATE_STREAMING', content: fullContent });
       }
 
-      // 5. Guardar respuesta
-      const botMessage = await addMessage(activeChatId, 'assistant', fullContent);
+      // 5. Extraer marcador de widget si el modelo lo incluyó
+      const WIDGET_RE = /\[WIDGET:(weather|time)\]/i;
+      const widgetMatch = fullContent.match(WIDGET_RE);
+      const cleanContent = fullContent.replace(WIDGET_RE, '').trimEnd();
+
+      const uriMap: Record<string, string> = {
+        weather: 'ui://mcp-app-demo/weather-app',
+        time: 'ui://mcp-app-demo/mcp-app',
+      };
+
+      let uiResourceUri: string | undefined;
+      if (widgetMatch) {
+        // Marcador explícito del modelo
+        uiResourceUri = uriMap[widgetMatch[1].toLowerCase()];
+      } else if (/widget/i.test(fullContent)) {
+        // Fallback: el modelo mencionó "widget" pero no emitió el marcador exacto
+        const lowerMsg = trimmed.toLowerCase();
+        const isWeatherTopic =
+          lowerMsg.includes('clima') || lowerMsg.includes('tiempo') ||
+          lowerMsg.includes('lluv') || lowerMsg.includes('temperatura') ||
+          lowerMsg.includes('weather') || lowerMsg.includes('pronóstico') ||
+          lowerMsg.includes('pronostico') || lowerMsg.includes('rain') ||
+          lowerMsg.includes('forecast');
+        const isTimeTopic =
+          lowerMsg.includes('hora') || lowerMsg.includes('time') || lowerMsg === '/mcp';
+        if (isWeatherTopic) uiResourceUri = uriMap.weather;
+        else if (isTimeTopic) uiResourceUri = uriMap.time;
+      }
+
+      const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, uiResourceUri);
       dispatch({ type: 'FINISH_STREAMING', message: botMessage });
 
       // 6. Refrescar lista de chats
