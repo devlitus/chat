@@ -31,7 +31,26 @@ registerAppTool(
   }
 );
 
-// Mantener estado del transporte si es necesario, 
+const cryptoResourceUri = 'ui://mcp-app-demo/crypto-app';
+
+registerAppTool(
+  server,
+  'get-crypto-price',
+  {
+    title: 'Get Crypto Prices',
+    description: 'Returns current prices and 24h change for Bitcoin, Ethereum, and Solana.',
+    inputSchema: {},
+    _meta: { ui: { resourceUri: cryptoResourceUri } }
+  },
+  async () => {
+    // El fetch real lo hace el host (MessageBubble), aqui solo declaramos la herramienta
+    return {
+      content: [{ type: 'text', text: 'Crypto prices tool invoked' }],
+    };
+  }
+);
+
+// Mantener estado del transporte si es necesario,
 // o manejar nuevas sesiones por cada POST.
 // Para un endpoint SSR puro sin express, usamos un enfoque similar a sse.
 let transport: StreamableHTTPServerTransport | null = null;

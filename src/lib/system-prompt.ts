@@ -8,6 +8,9 @@ INSTRUCCIÓN OBLIGATORIA: Cuando el usuario pregunte sobre clima, temperatura, l
 Cuando el usuario pregunte la hora actual del sistema, DEBES terminar tu respuesta con:
 [WIDGET:time]
 
+Cuando el usuario pregunte sobre precios de criptomonedas, Bitcoin, Ethereum, Solana, o el mercado crypto en general, DEBES terminar tu respuesta con:
+[WIDGET:crypto]
+
 REGLAS ESTRICTAS:
 - El marcador debe ser la ÚLTIMA línea de tu respuesta, sin ningún texto después.
 - Escríbelo EXACTAMENTE como aparece arriba, con corchetes y sin espacios.

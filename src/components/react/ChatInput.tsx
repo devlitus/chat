@@ -53,13 +53,14 @@ export function ChatInput() {
       }
 
       // 5. Extraer marcador de widget si el modelo lo incluyó
-      const WIDGET_RE = /\[WIDGET:(weather|time)\]/i;
+      const WIDGET_RE = /\[WIDGET:(weather|time|crypto)\]/i;
       const widgetMatch = fullContent.match(WIDGET_RE);
       const cleanContent = fullContent.replace(WIDGET_RE, '').trimEnd();
 
       const uriMap: Record<string, string> = {
         weather: 'ui://mcp-app-demo/weather-app',
         time: 'ui://mcp-app-demo/mcp-app',
+        crypto: 'ui://mcp-app-demo/crypto-app',
       };
 
       let uiResourceUri: string | undefined;
@@ -77,8 +78,15 @@ export function ChatInput() {
           lowerMsg.includes('forecast');
         const isTimeTopic =
           lowerMsg.includes('hora') || lowerMsg.includes('time') || lowerMsg === '/mcp';
+        const isCryptoTopic =
+          lowerMsg.includes('crypto') || lowerMsg.includes('bitcoin') ||
+          lowerMsg.includes('btc') || lowerMsg.includes('ethereum') ||
+          lowerMsg.includes('eth') || lowerMsg.includes('solana') ||
+          lowerMsg.includes('sol') || lowerMsg.includes('criptomoneda') ||
+          (lowerMsg.includes('precio') && (lowerMsg.includes('moneda') || lowerMsg.includes('coin')));
         if (isWeatherTopic) uiResourceUri = uriMap.weather;
         else if (isTimeTopic) uiResourceUri = uriMap.time;
+        else if (isCryptoTopic) uiResourceUri = uriMap.crypto;
       }
 
       const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, uiResourceUri);
