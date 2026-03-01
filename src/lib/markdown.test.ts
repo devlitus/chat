@@ -66,9 +66,9 @@ describe('markdown.ts - Renderizado', () => {
     it('debe escapar HTML peligroso', () => {
       const result = renderMarkdown('<script>alert("xss")</script>');
 
-      // marked por defecto NO escapa HTML (sanitize: false)
-      // Si esto falla, agregar sanitización explícita
-      expect(result).toContain('&lt;script&gt;');
+      // DOMPurify elimina completamente los tags peligrosos (más seguro que solo escapar)
+      expect(result).not.toContain('<script>');
+      expect(result).not.toContain('alert("xss")');
     });
   });
 

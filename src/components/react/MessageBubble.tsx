@@ -58,7 +58,7 @@ export function MessageBubble({ message }: Props) {
           type: 'mcp_tool_result',
           toolName: 'get-time',
           time: timeResult
-        }, '*');
+        }, window.location.origin);
       }
 
       if (data && data.type === 'mcp_call_tool' && data.toolName === 'get-location') {
@@ -69,14 +69,14 @@ export function MessageBubble({ message }: Props) {
               toolName: 'get-location',
               latitude: pos.coords.latitude,
               longitude: pos.coords.longitude,
-            }, '*');
+            }, window.location.origin);
           },
           () => {
             iframeRef.current?.contentWindow?.postMessage({
               type: 'mcp_tool_result',
               toolName: 'get-location',
               error: 'permission-denied',
-            }, '*');
+            }, window.location.origin);
           }
         );
       }
@@ -107,7 +107,7 @@ export function MessageBubble({ message }: Props) {
               type: 'mcp_tool_result',
               toolName: 'get-crypto-price',
               data: coins,
-            }, '*');
+            }, window.location.origin);
           })
           .catch((err) => {
             clearTimeout(timeout);
@@ -116,7 +116,7 @@ export function MessageBubble({ message }: Props) {
               type: 'mcp_tool_result',
               toolName: 'get-crypto-price',
               error: code,
-            }, '*');
+            }, window.location.origin);
           });
       }
     };
@@ -156,24 +156,34 @@ export function MessageBubble({ message }: Props) {
           <span className="msg-name">Chat AI</span>
           <span className="msg-time">{time}</span>
         </div>
-        {message.uiResourceUri ? (
-          <div style={{ width: '360px', height: '480px' }}>
-            <iframe
-              ref={iframeRef}
-              src={window.location.origin + message.uiResourceUri.replace('ui://mcp-app-demo', '')}
-              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-              sandbox="allow-scripts allow-same-origin allow-forms"
-              allow="geolocation"
-              title="MCP Widget"
+        {(() => {
+          if (message.uiResourceUri) {
+            const ALLOWED_UI_PATHS = ['/mcp-app', '/crypto-app', '/weather-app'];
+            const uiPath = message.uiResourceUri.replace('ui://mcp-app-demo', '');
+            if (ALLOWED_UI_PATHS.some(p => uiPath.startsWith(p))) {
+              const iframeSrc = window.location.origin + uiPath;
+              return (
+                <div style={{ width: '360px', height: '480px' }}>
+                  <iframe
+                    ref={iframeRef}
+                    src={iframeSrc}
+                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    allow="geolocation"
+                    title="MCP Widget"
+                  />
+                </div>
+              );
+            }
+          }
+          return (
+            <div
+              ref={bubbleRef}
+              className="bubble bot-bubble"
+              dangerouslySetInnerHTML={{ __html: renderedHtml! }}
             />
-          </div>
-        ) : (
-          <div
-            ref={bubbleRef}
-            className="bubble bot-bubble"
-            dangerouslySetInnerHTML={{ __html: renderedHtml! }}
-          />
-        )}
+          );
+        })()}
       </div>
     </div>
   );

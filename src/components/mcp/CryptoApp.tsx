@@ -45,7 +45,7 @@ export default function CryptoApp() {
     setCoins([]);
     setRetryIn(null);
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-crypto-price' }, '*');
+      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-crypto-price' }, document.referrer || window.location.origin);
     } else {
       setErrorCode('unknown');
       setStatus('error');

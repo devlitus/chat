@@ -1,13 +1,25 @@
 // src/components/react/ChatInput.tsx
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useChatState, useChatDispatch } from './ChatContext';
+import { useStore } from '@nanostores/react';
+import { $activeChatId, $isStreaming } from '../../stores/chat-store';
+import {
+  addUserMessage,
+  updateChatInList,
+  startStreaming,
+  updateStreaming,
+  finishStreaming,
+  setBotError,
+  setChats,
+} from '../../stores/chat-actions';
 import { addMessage, getMessagesByChatId, getChat, updateChat, getAllChats } from '../../lib/db';
 import { streamChat } from '../../lib/groq-client';
 
+const WIDGET_RE = /\[WIDGET:(weather|time|crypto)\]/i;
+
 export function ChatInput() {
-  const { activeChatId, isStreaming } = useChatState();
-  const dispatch = useChatDispatch();
+  const activeChatId = useStore($activeChatId);
+  const isStreaming = useStore($isStreaming);
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -29,14 +41,14 @@ export function ChatInput() {
     try {
       // 1. Guardar mensaje del usuario
       const userMessage = await addMessage(activeChatId, 'user', trimmed);
-      dispatch({ type: 'ADD_USER_MESSAGE', message: userMessage });
+      addUserMessage(userMessage);
 
       // 2. Generar titulo si es primer mensaje
       const chat = await getChat(activeChatId);
       if (chat && chat.messageCount <= 1) {
         const title = trimmed.length > 50 ? trimmed.substring(0, 50) + '...' : trimmed;
         const updated = await updateChat(activeChatId, { title });
-        dispatch({ type: 'UPDATE_CHAT_IN_LIST', chat: updated });
+        updateChatInList(updated);
       }
 
       // 3. Obtener historial
@@ -44,16 +56,15 @@ export function ChatInput() {
       const history = allMessages.map((m) => ({ role: m.role, content: m.content }));
 
       // 4. Streaming + detección de widget por marcador del modelo
-      dispatch({ type: 'START_STREAMING' });
+      startStreaming();
 
       let fullContent = '';
       for await (const token of streamChat(history)) {
         fullContent += token;
-        dispatch({ type: 'UPDATE_STREAMING', content: fullContent });
+        updateStreaming(fullContent);
       }
 
       // 5. Extraer marcador de widget si el modelo lo incluyó
-      const WIDGET_RE = /\[WIDGET:(weather|time|crypto)\]/i;
       const widgetMatch = fullContent.match(WIDGET_RE);
       const cleanContent = fullContent.replace(WIDGET_RE, '').trimEnd();
 
@@ -90,22 +101,19 @@ export function ChatInput() {
       }
 
       const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, uiResourceUri);
-      dispatch({ type: 'FINISH_STREAMING', message: botMessage });
+      finishStreaming(botMessage);
 
       // 6. Refrescar lista de chats
       const chats = await getAllChats();
-      dispatch({ type: 'SET_CHATS', chats });
+      setChats(chats);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
-      dispatch({
-        type: 'SET_BOT_ERROR',
-        error: `No se pudo obtener respuesta: ${errorMsg}`,
-      });
+      setBotError(`No se pudo obtener respuesta: ${errorMsg}`);
     }
 
     // Focus de vuelta al textarea
     textareaRef.current?.focus();
-  }, [text, activeChatId, isStreaming, dispatch]);
+  }, [text, activeChatId, isStreaming]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -120,8 +128,8 @@ export function ChatInput() {
   return (
     <div className="chat-input-area">
       <div className="input-wrapper">
-        <button className="icon-btn" title="Attach file">
-          <span className="material-symbols-outlined">attach_file</span>
+        <button className="icon-btn" title="Attach file" aria-label="Attach file">
+          <span className="material-symbols-outlined" aria-hidden="true">attach_file</span>
         </button>
         <textarea
           ref={textareaRef}
@@ -133,16 +141,17 @@ export function ChatInput() {
           onKeyDown={handleKeyDown}
         />
         <div className="right-buttons">
-          <button className="icon-btn" title="Use Microphone">
-            <span className="material-symbols-outlined">mic</span>
+          <button className="icon-btn" title="Use Microphone" aria-label="Use Microphone">
+            <span className="material-symbols-outlined" aria-hidden="true">mic</span>
           </button>
           <button
             className="send-btn"
             title="Send message"
+            aria-label="Send message"
             onClick={sendMessage}
             disabled={isStreaming || !text.trim()}
           >
-            <span className="material-symbols-outlined">send</span>
+            <span className="material-symbols-outlined" aria-hidden="true">send</span>
           </button>
         </div>
       </div>

@@ -1,62 +1,16 @@
 ---
+// src/components/SidebarHeader.astro
+// Header estatico del sidebar: marca e icono de toggle menu.
+// Sin logica JavaScript — 100% HTML estatico generado por Astro.
 ---
 <div class="sidebar-header">
-	<div class="brand">
-		<div class="brand-icon">
-			<span class="material-symbols-outlined">smart_toy</span>
-		</div>
-		<h1>Chat AI</h1>
-	</div>
-	<button class="menu-btn" title="Toggle menu">
-		<span class="material-symbols-outlined">menu_open</span>
-	</button>
+  <div class="brand">
+    <div class="brand-icon">
+      <span class="material-symbols-outlined" aria-hidden="true">smart_toy</span>
+    </div>
+    <h1>Chat AI</h1>
+  </div>
+  <button class="menu-btn" title="Toggle menu" aria-label="Toggle sidebar menu">
+    <span class="material-symbols-outlined" aria-hidden="true">menu_open</span>
+  </button>
 </div>
-
-<style>
-	.sidebar-header {
-		padding: 16px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	.brand {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-	}
-	.brand-icon {
-		width: 32px;
-		height: 32px;
-		border-radius: 8px;
-		background: rgba(43, 140, 238, 0.2);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--color-primary);
-	}
-	.brand-icon .material-symbols-outlined {
-		font-size: 24px;
-	}
-	h1 {
-		font-size: 18px;
-		font-weight: 700;
-		margin: 0;
-		letter-spacing: -0.025em;
-	}
-	.menu-btn {
-		background: none;
-		border: none;
-		color: var(--color-text-secondary);
-		cursor: pointer;
-		padding: 4px;
-		border-radius: 6px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: color 0.15s, background-color 0.15s;
-	}
-	.menu-btn:hover {
-		color: var(--color-text);
-		background: rgba(255, 255, 255, 0.05);
-	}
-</style>

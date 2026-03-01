@@ -37,6 +37,19 @@ import 'highlight.js/styles/github-dark.css';
 		box-sizing: border-box;
 	}
 
+	/* Clase utilitaria para contenido visible solo para lectores de pantalla (WCAG) */
+	.sr-only {
+	  position: absolute;
+	  width: 1px;
+	  height: 1px;
+	  padding: 0;
+	  margin: -1px;
+	  overflow: hidden;
+	  clip: rect(0, 0, 0, 0);
+	  white-space: nowrap;
+	  border: 0;
+	}
+
 	html, body {
 		margin: 0;
 		padding: 0;
@@ -235,6 +248,11 @@ import 'highlight.js/styles/github-dark.css';
 	  font-size: 14px;
 	  font-family: 'Inter', sans-serif;
 	  outline: none;
+	}
+
+	.search-container input:focus-visible {
+	  outline: none;
+	  box-shadow: 0 0 0 2px #3b82f6; /* indicador de foco accesible */
 	}
 
 	.search-container input::placeholder {
@@ -865,6 +883,11 @@ import 'highlight.js/styles/github-dark.css';
 	  40% { opacity: 1; }
 	}
 
+	@keyframes local-spin {
+	  from { transform: rotate(0deg); }
+	  to { transform: rotate(360deg); }
+	}
+
 	/* ============================================================
 	   Chat Input
 	   ============================================================ */
@@ -912,6 +935,7 @@ import 'highlight.js/styles/github-dark.css';
 	  outline: none;
 	  line-height: 1.5;
 	}
+
 
 	.chat-input-area textarea::placeholder {
 	  color: var(--color-text-muted);

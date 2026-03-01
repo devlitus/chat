@@ -6,7 +6,8 @@
       "WebSearch",
       "WebFetch(domain:docs.astro.build)",
       "WebFetch(domain:angelika.me)",
-      "Bash(pnpm test:*)"
+      "Bash(pnpm test:*)",
+      "Bash(pnpm:*)"
     ]
   }
 }

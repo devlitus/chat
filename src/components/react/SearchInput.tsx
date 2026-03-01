@@ -1,22 +1,18 @@
 // src/components/react/SearchInput.tsx
 
 import { useCallback, useRef } from 'react';
-import { useChatDispatch } from './ChatContext';
+import { setSearchQuery } from '../../stores/chat-actions';
 
 export function SearchInput() {
-  const dispatch = useChatDispatch();
   const timerRef = useRef<number>(0);
 
-  const handleInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      clearTimeout(timerRef.current);
-      const value = e.target.value;
-      timerRef.current = window.setTimeout(() => {
-        dispatch({ type: 'SET_SEARCH_QUERY', query: value.trim() });
-      }, 250);
-    },
-    [dispatch]
-  );
+  const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(timerRef.current);
+    const value = e.target.value;
+    timerRef.current = window.setTimeout(() => {
+      setSearchQuery(value.trim());
+    }, 250);
+  }, []);
 
   return (
     <div className="search-wrapper">
