@@ -88,7 +88,7 @@ export default function CryptoApp() {
   return (
     <div className="min-h-screen flex items-start justify-center p-3 pt-3 bg-transparent font-sans">
       {/* Outer card */}
-      <div className="relative w-full max-w-sm rounded-3xl p-[3px] shadow-xl border border-white/5 overflow-hidden">
+      <div className="relative w-full max-w-sm bg-[#0b1221] rounded-3xl p-[3px] shadow-xl border border-white/5 overflow-hidden">
         {/* Inner panel */}
         <div className="bg-[#0f1523] rounded-[1.35rem] p-5 relative overflow-hidden">
 
