@@ -42,7 +42,9 @@ describe('markdown.ts - Renderizado', () => {
 
       expect(result).toContain('<pre>');
       expect(result).toContain('<code');
-      expect(result).toContain('const x = 10;');
+      // El contenido aparece resaltado con spans de hljs
+      expect(result).toContain('class="hljs language-javascript"');
+      expect(result).toContain('x =');
     });
 
     it('debe respetar saltos de línea (breaks: true)', () => {

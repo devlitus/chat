@@ -1,3 +1,6 @@
+---
+import 'highlight.js/styles/github-dark.css';
+---
 <!doctype html>
 <html lang="es">
 	<head>
@@ -276,16 +279,10 @@
 	  width: 100%;
 	  display: flex;
 	  align-items: center;
-	  gap: 12px;
-	  padding: 12px;
 	  border-radius: 8px;
 	  border: 1px solid transparent;
 	  background: transparent;
-	  cursor: pointer;
-	  text-align: left;
-	  font-family: 'Inter', sans-serif;
 	  transition: background-color 0.15s;
-	  color: inherit;
 	}
 
 	.chat-item:hover {
@@ -296,6 +293,21 @@
 	  background: #1f2e3d;
 	  border-color: rgba(35, 54, 72, 0.5);
 	  border-left: 4px solid var(--color-primary);
+	}
+
+	.chat-item-select {
+	  flex: 1;
+	  display: flex;
+	  align-items: center;
+	  gap: 12px;
+	  padding: 12px;
+	  background: transparent;
+	  border: none;
+	  cursor: pointer;
+	  text-align: left;
+	  font-family: 'Inter', sans-serif;
+	  color: inherit;
+	  min-width: 0;
 	}
 
 	.chat-item-icon {
@@ -326,6 +338,91 @@
 	.chat-item.active .chat-item-content p {
 	  color: var(--color-text);
 	  font-weight: 500;
+	}
+
+	.chat-delete-btn {
+	  opacity: 0;
+	  flex-shrink: 0;
+	  background: transparent;
+	  border: none;
+	  color: var(--color-text-muted);
+	  cursor: pointer;
+	  padding: 6px;
+	  margin-right: 6px;
+	  border-radius: 6px;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  transition: opacity 0.15s, color 0.15s, background-color 0.15s;
+	}
+
+	.chat-item:hover .chat-delete-btn {
+	  opacity: 1;
+	}
+
+	.chat-delete-btn:hover {
+	  color: #ef4444;
+	  background: rgba(239, 68, 68, 0.1);
+	}
+
+	.chat-delete-btn .material-symbols-outlined {
+	  font-size: 18px;
+	}
+
+	.chat-item.confirming {
+	  background: rgba(239, 68, 68, 0.07);
+	  border-color: rgba(239, 68, 68, 0.25);
+	}
+
+	.chat-delete-confirm {
+	  display: flex;
+	  align-items: center;
+	  gap: 2px;
+	  flex-shrink: 0;
+	  padding-right: 6px;
+	}
+
+	.chat-delete-label {
+	  font-size: 11px;
+	  font-weight: 500;
+	  color: #ef4444;
+	  white-space: nowrap;
+	  padding-right: 2px;
+	}
+
+	.chat-confirm-yes,
+	.chat-confirm-no {
+	  background: transparent;
+	  border: none;
+	  cursor: pointer;
+	  padding: 4px;
+	  border-radius: 5px;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  transition: background-color 0.15s, color 0.15s;
+	}
+
+	.chat-confirm-yes {
+	  color: #ef4444;
+	}
+
+	.chat-confirm-yes:hover {
+	  background: rgba(239, 68, 68, 0.15);
+	}
+
+	.chat-confirm-no {
+	  color: var(--color-text-muted);
+	}
+
+	.chat-confirm-no:hover {
+	  background: rgba(255, 255, 255, 0.06);
+	  color: var(--color-text-secondary);
+	}
+
+	.chat-confirm-yes .material-symbols-outlined,
+	.chat-confirm-no .material-symbols-outlined {
+	  font-size: 16px;
 	}
 
 	/* User Profile */
@@ -671,27 +768,77 @@
 	}
 
 	.bot-bubble pre {
-	  background: var(--color-sidebar);
+	  position: relative;
 	  border-radius: 8px;
 	  border: 1px solid var(--color-border);
-	  padding: 16px;
-	  overflow-x: auto;
-	  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-	  font-size: 14px;
-	  color: #cbd5e1;
 	  margin: 12px 0;
+	  overflow: hidden;
+	}
+
+	.bot-bubble pre code.hljs {
+	  background: #0d1117;
+	  border-radius: 0;
+	  padding: 16px;
+	  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+	  font-size: 13.5px;
+	  line-height: 1.6;
+	  display: block;
+	  overflow-x: auto;
 	}
 
 	.bot-bubble code {
 	  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-	  font-size: 14px;
+	  font-size: 13.5px;
 	}
 
 	.bot-bubble :not(pre) > code {
-	  background: var(--color-sidebar);
+	  background: rgba(110, 118, 129, 0.15);
 	  padding: 2px 6px;
 	  border-radius: 4px;
 	  border: 1px solid var(--color-border);
+	  color: #e6edf3;
+	}
+
+	/* Header del bloque de código con lenguaje + botón copiar */
+	.bot-bubble pre .code-header {
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	  background: #161b22;
+	  border-bottom: 1px solid var(--color-border);
+	  padding: 6px 12px;
+	}
+
+	.bot-bubble pre .code-lang {
+	  font-size: 11px;
+	  font-weight: 500;
+	  color: #8b949e;
+	  text-transform: lowercase;
+	  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+	}
+
+	.bot-bubble pre .copy-btn {
+	  display: flex;
+	  align-items: center;
+	  gap: 4px;
+	  background: transparent;
+	  border: none;
+	  color: #8b949e;
+	  cursor: pointer;
+	  font-size: 11px;
+	  font-family: 'Inter', sans-serif;
+	  padding: 2px 6px;
+	  border-radius: 4px;
+	  transition: color 0.15s, background-color 0.15s;
+	}
+
+	.bot-bubble pre .copy-btn:hover {
+	  color: #e6edf3;
+	  background: rgba(255, 255, 255, 0.06);
+	}
+
+	.bot-bubble pre .copy-btn .material-symbols-outlined {
+	  font-size: 14px;
 	}
 
 	.error-bubble {
