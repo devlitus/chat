@@ -65,15 +65,77 @@ El host maneja los mensajes en `MessageBubble.tsx`. Si un mensaje del asistente 
 
 ## Agentes
 
-Este proyecto usa dos subagentes especializados con un flujo secuencial:
+Este proyecto usa cinco subagentes especializados con un pipeline secuencial automático:
 
-1. **planner** — Planifica y diseña nuevas features. Analiza el codebase, investiga buenas prácticas y genera documentos de diseño detallados en `docs/`. Siempre ejecutar primero.
-2. **implementer** — Implementa features a partir de los planes generados por el planner en `docs/`. Ejecutar después de que el planner haya terminado su plan.
+1. **planner** — Planifica y diseña nuevas features. Analiza el codebase, investiga buenas prácticas y genera documentos de diseño en `docs/`. Siempre ejecutar primero.
+2. **implementer** — Implementa features a partir de los planes del planner. Ejecutar después del planner.
+3. **quality** — Revisa calidad del código (TypeScript, complejidad, convenciones, build, tests). Ejecutar automáticamente después del implementer.
+4. **security** — Audita vulnerabilidades OWASP, secretos expuestos, XSS e inyecciones. Ejecutar automáticamente después del quality.
+5. **accessibility** — Verifica WCAG 2.1, HTML semántico, ARIA y navegación por teclado. Ejecutar automáticamente después del security. Genera el resumen consolidado del pipeline.
 
-### Flujo de trabajo
+### Flujo de trabajo automático
 
-1. Usar el agente **planner** para analizar requisitos y escribir el plan de diseño en `docs/`.
-2. Usar el agente **implementer** para implementar el plan generado.
+**IMPORTANTE**: Después de que el `implementer` termine cualquier implementación, ejecuta automáticamente los agentes de QA en este orden:
+
+```
+planner → implementer → quality → security → accessibility
+```
+
+1. Usar el agente **planner** para analizar requisitos y escribir el plan en `docs/`.
+2. Usar el agente **implementer** para implementar el plan.
+3. **Clasificar cambios** (ver tabla de ejecución selectiva abajo).
+4. Usar el agente **quality** para revisar calidad — genera `.claude/reports/quality-report.md`.
+5. Si quality reporta `## Pipeline: HALT` (build fallido), **DETENER el pipeline** y devolver solo el reporte de quality al usuario. No ejecutar security ni accessibility.
+6. Usar el agente **security** (si aplica) — genera `.claude/reports/security-report.md`.
+7. Usar el agente **accessibility** (si aplica) — genera `.claude/reports/accessibility-report.md` y `.claude/reports/pipeline-summary.md`.
+
+### Ejecución selectiva
+
+Antes de lanzar los agentes QA, clasifica los archivos modificados y salta agentes irrelevantes:
+
+| Archivos modificados | quality | security | accessibility |
+|---|---|---|---|
+| `src/pages/api/`, `src/lib/`, `src/middleware/` | SI | SI | NO |
+| `src/components/`, `src/pages/*.astro`, `src/layouts/` | SI | SI | SI |
+| Solo `.css`, solo estilos en `<style>` | SI | NO | SI |
+| Solo `docs/`, `README`, `.md` | NO | NO | NO |
+| `package.json`, config files | SI | SI | NO |
+| Mezcla de archivos | SI | SI | SI |
+
+**quality** siempre se ejecuta (excepto para docs). Los otros se saltan según la tabla.
+
+### Fail-fast
+
+Si el agente **quality** detecta que el build falla (`pnpm build` retorna error), el pipeline se detiene inmediatamente. No tiene sentido auditar seguridad ni accesibilidad de código que no compila. El reporte de quality incluirá `## Pipeline: HALT` como señal.
+
+### Ciclo de corrección
+
+Cuando el pipeline detecta problemas **críticos** en cualquier reporte:
+1. Presentar el `pipeline-summary.md` al usuario con los hallazgos críticos.
+2. Usar el agente **implementer** para corregir SOLO los problemas marcados como críticos.
+3. Re-ejecutar SOLO los agentes QA que reportaron problemas (no todos).
+4. **Máximo 2 iteraciones** de corrección. Si después de 2 ciclos aún hay críticos, presentar el reporte final al usuario para decisión manual.
+
+```
+implementer → QA (ciclo 1) → implementer (fixes) → QA (ciclo 2) → STOP
+```
+
+### Sistema de memoria de agentes
+
+Cada agente de QA mantiene memoria persistente entre sesiones para acumular conocimiento del proyecto:
+
+- `.claude/memory/quality-memory.md` — patrones de calidad del proyecto
+- `.claude/memory/security-memory.md` — vulnerabilidades conocidas y superficie de ataque
+- `.claude/memory/accessibility-memory.md` — estado de accesibilidad por componente
+
+### Comunicación entre agentes
+
+Los agentes se comunican via archivos compartidos en `.claude/reports/`:
+- El agente **security** lee el reporte de **quality** para contexto
+- El agente **accessibility** lee ambos reportes anteriores
+- El agente **accessibility** consolida todo en `pipeline-summary.md`
+
+Si el pipeline-summary reporta problemas críticos, resolver antes del siguiente commit.
 
 ### referencias de documentación
 

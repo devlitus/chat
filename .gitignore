@@ -24,3 +24,7 @@ pnpm-debug.log*
 nul
 .vercel
 build-log.txt
+
+# claude code agent reports and memory (may contain security info)
+.claude/reports/
+.claude/memory/
