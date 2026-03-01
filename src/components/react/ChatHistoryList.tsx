@@ -1,8 +1,8 @@
 // src/components/react/ChatHistoryList.tsx
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useChatState, useChatDispatch } from './ChatContext';
-import { deleteChat, getAllChats, getMessagesByChatId, searchChats } from '../../lib/db';
+import { deleteChat, getAllChats, getMessagesByChatId } from '../../lib/db';
 import { updateSession } from '../../lib/session';
 import type { Chat } from '../../lib/db';
 
@@ -34,6 +34,7 @@ function groupChatsByDate(chats: Chat[]): Map<string, Chat[]> {
 export function ChatHistoryList() {
   const { chats, activeChatId, searchQuery } = useChatState();
   const dispatch = useChatDispatch();
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const filteredChats = useMemo(() => {
     if (!searchQuery) return chats;
@@ -53,11 +54,9 @@ export function ChatHistoryList() {
     [activeChatId, dispatch]
   );
 
-  const handleDeleteChat = useCallback(
-    async (chatId: string, e: React.MouseEvent) => {
-      e.preventDefault();
-      if (!confirm('Eliminar este chat?')) return;
-
+  const handleConfirmDelete = useCallback(
+    async (chatId: string) => {
+      setConfirmingId(null);
       await deleteChat(chatId);
       dispatch({ type: 'REMOVE_CHAT_FROM_LIST', chatId });
 
@@ -69,7 +68,6 @@ export function ChatHistoryList() {
           const messages = await getMessagesByChatId(newActiveId);
           dispatch({ type: 'SET_ACTIVE_CHAT', chatId: newActiveId, messages });
         } else {
-          // Crear un chat nuevo si no quedan
           const { createChat } = await import('../../lib/db');
           const newChat = await createChat();
           updateSession({ lastActiveChatId: newChat.id });
@@ -100,18 +98,49 @@ export function ChatHistoryList() {
           {groupChats.map((chat) => {
             const isActive = chat.id === activeChatId;
             const icon = isActive ? 'chat_bubble' : 'chat_bubble_outline';
+            const isConfirming = confirmingId === chat.id;
             return (
-              <button
+              <div
                 key={chat.id}
-                className={`chat-item${isActive ? ' active' : ''}`}
-                onClick={() => handleSelectChat(chat.id)}
-                onContextMenu={(e) => handleDeleteChat(chat.id, e)}
+                className={`chat-item${isActive ? ' active' : ''}${isConfirming ? ' confirming' : ''}`}
               >
-                <span className="material-symbols-outlined chat-item-icon">{icon}</span>
-                <div className="chat-item-content">
-                  <p>{chat.title}</p>
-                </div>
-              </button>
+                <button
+                  className="chat-item-select"
+                  onClick={() => { setConfirmingId(null); handleSelectChat(chat.id); }}
+                >
+                  <span className="material-symbols-outlined chat-item-icon">{icon}</span>
+                  <div className="chat-item-content">
+                    <p>{chat.title}</p>
+                  </div>
+                </button>
+                {isConfirming ? (
+                  <div className="chat-delete-confirm">
+                    <span className="chat-delete-label">Eliminar?</span>
+                    <button
+                      className="chat-confirm-yes"
+                      onClick={() => handleConfirmDelete(chat.id)}
+                      title="Confirmar"
+                    >
+                      <span className="material-symbols-outlined">check</span>
+                    </button>
+                    <button
+                      className="chat-confirm-no"
+                      onClick={() => setConfirmingId(null)}
+                      title="Cancelar"
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="chat-delete-btn"
+                    onClick={() => setConfirmingId(chat.id)}
+                    title="Eliminar chat"
+                  >
+                    <span className="material-symbols-outlined">delete</span>
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>

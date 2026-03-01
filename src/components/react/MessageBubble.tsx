@@ -1,6 +1,6 @@
 // src/components/react/MessageBubble.tsx
 
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Message } from '../../lib/db';
 import { renderMarkdown } from '../../lib/markdown';
 
@@ -14,6 +14,7 @@ function formatTime(isoString: string): string {
 
 export function MessageBubble({ message }: Props) {
   const time = formatTime(message.createdAt);
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
   const renderedHtml = useMemo(() => {
     if (message.role === 'assistant') {
@@ -23,6 +24,26 @@ export function MessageBubble({ message }: Props) {
   }, [message.content, message.role]);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handleCopy = useCallback((e: MouseEvent) => {
+    const btn = (e.target as HTMLElement).closest('.copy-btn') as HTMLButtonElement | null;
+    if (!btn) return;
+    const code = decodeURIComponent(btn.dataset.code ?? '');
+    navigator.clipboard.writeText(code).then(() => {
+      const icon = btn.querySelector('.material-symbols-outlined')!;
+      const prev = icon.textContent;
+      icon.textContent = 'check';
+      btn.style.color = '#3fb950';
+      setTimeout(() => { icon.textContent = prev; btn.style.color = ''; }, 1500);
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = bubbleRef.current;
+    if (!el) return;
+    el.addEventListener('click', handleCopy);
+    return () => el.removeEventListener('click', handleCopy);
+  }, [handleCopy]);
 
   useEffect(() => {
     // Escuchar directamente los mensajes del Iframe hijo sin usar SDK
@@ -148,6 +169,7 @@ export function MessageBubble({ message }: Props) {
           </div>
         ) : (
           <div
+            ref={bubbleRef}
             className="bubble bot-bubble"
             dangerouslySetInnerHTML={{ __html: renderedHtml! }}
           />
