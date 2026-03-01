@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@astrojs/internal-helpers@0.7.5':
+    hash: 5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e
+    path: patches/@astrojs__internal-helpers@0.7.5.patch
+
 importers:
 
   .:
@@ -3117,11 +3122,11 @@ snapshots:
 
   '@astrojs/compiler@2.13.0': {}
 
-  '@astrojs/internal-helpers@0.7.5': {}
+  '@astrojs/internal-helpers@0.7.5(patch_hash=5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e)': {}
 
   '@astrojs/markdown-remark@6.3.10':
     dependencies:
-      '@astrojs/internal-helpers': 0.7.5
+      '@astrojs/internal-helpers': 0.7.5(patch_hash=5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e)
       '@astrojs/prism': 3.3.0
       github-slugger: 2.0.0
       hast-util-from-html: 2.0.3
@@ -3147,7 +3152,7 @@ snapshots:
 
   '@astrojs/node@9.5.4(astro@5.18.0(@types/node@25.1.0)(@vercel/functions@2.2.13)(rollup@4.57.1)(typescript@5.9.3))':
     dependencies:
-      '@astrojs/internal-helpers': 0.7.5
+      '@astrojs/internal-helpers': 0.7.5(patch_hash=5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e)
       astro: 5.18.0(@types/node@25.1.0)(@vercel/functions@2.2.13)(rollup@4.57.1)(typescript@5.9.3)
       send: 1.2.1
       server-destroy: 1.0.1
@@ -3195,7 +3200,7 @@ snapshots:
 
   '@astrojs/vercel@9.0.4(astro@5.18.0(@types/node@25.1.0)(@vercel/functions@2.2.13)(rollup@4.57.1)(typescript@5.9.3))(react@19.2.4)(rollup@4.57.1)':
     dependencies:
-      '@astrojs/internal-helpers': 0.7.5
+      '@astrojs/internal-helpers': 0.7.5(patch_hash=5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e)
       '@vercel/analytics': 1.6.1(react@19.2.4)
       '@vercel/functions': 2.2.13
       '@vercel/nft': 0.30.4(rollup@4.57.1)
@@ -4259,7 +4264,7 @@ snapshots:
   astro@5.18.0(@types/node@25.1.0)(@vercel/functions@2.2.13)(rollup@4.57.1)(typescript@5.9.3):
     dependencies:
       '@astrojs/compiler': 2.13.0
-      '@astrojs/internal-helpers': 0.7.5
+      '@astrojs/internal-helpers': 0.7.5(patch_hash=5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e)
       '@astrojs/markdown-remark': 6.3.10
       '@astrojs/telemetry': 3.3.0
       '@capsizecss/unpack': 4.0.0
