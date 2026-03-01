@@ -35,6 +35,8 @@ export async function* streamChat(
         if (data === '[DONE]') return;
         try {
           const parsed = JSON.parse(data);
+          // Extraer SOLO el token estándar final. Ignoramos reasoning_content deliberadamente para no saturar al usuario,
+          // lo que provocará que la UI muestre el Loading Spinner mientras el modelo piensa.
           const token = parsed.choices?.[0]?.delta?.content;
           if (token) yield token;
         } catch {

@@ -16,6 +16,9 @@
     "@astrojs/node": "^9.5.2",
     "@astrojs/react": "^4.4.2",
     "@astrojs/vercel": "^9.0.4",
+    "@mcp-ui/client": "^6.1.0",
+    "@modelcontextprotocol/ext-apps": "^1.1.2",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.17.1",
@@ -28,6 +31,7 @@
     "@vitest/ui": "^4.0.18",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.4.0",
+    "playwright": "^1.58.2",
     "vitest": "^4.0.18"
   }
 }

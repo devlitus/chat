@@ -2,6 +2,7 @@
 
 import type { APIRoute } from 'astro';
 import Groq from 'groq-sdk';
+import { SYSTEM_PROMPT } from '../../lib/system-prompt';
 
 export const prerender = false;
 
@@ -22,8 +23,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     for (const msg of messages) {
-      if (!msg.role || !msg.content || !['user', 'assistant'].includes(msg.role)) {
-        return new Response(JSON.stringify({ error: 'Invalid message format' }), {
+      if (!msg.role || typeof msg.content !== 'string' || !['user', 'assistant'].includes(msg.role)) {
+        return new Response(JSON.stringify({ error: 'Invalid message format', details: msg }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         });
@@ -34,17 +35,20 @@ export const POST: APIRoute = async ({ request }) => {
       messages: [
         {
           role: 'system',
-          content: 'Eres un asistente de IA util y amigable. Responde de forma clara y concisa. Puedes usar Markdown para formatear tus respuestas.',
+          content: SYSTEM_PROMPT,
         },
         ...messages.map((m: { role: string; content: string }) => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
         })),
       ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
-      max_tokens: 2048,
+      model: 'openai/gpt-oss-20b',
+      temperature: 1,
+      max_completion_tokens: 8192,
+      top_p: 1,
       stream: true,
+      reasoning_effort: 'medium',
+      stop: null,
     });
 
     const stream = new ReadableStream({
