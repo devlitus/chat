@@ -59,6 +59,45 @@ export function MessageBubble({ message }: Props) {
           }
         );
       }
+
+      if (data && data.type === 'mcp_call_tool' && data.toolName === 'get-crypto-price') {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true',
+          { signal: controller.signal }
+        )
+          .then((res) => {
+            clearTimeout(timeout);
+            if (res.status === 429) throw Object.assign(new Error(), { code: 'rate-limited' });
+            if (!res.ok) throw Object.assign(new Error(), { code: 'service-error' });
+            return res.json();
+          })
+          .then((json: Record<string, { usd: number; usd_24h_change: number }>) => {
+            const coins = Object.entries(json).map(([id, values]) => ({
+              id,
+              name: id.charAt(0).toUpperCase() + id.slice(1),
+              symbol: id === 'bitcoin' ? 'BTC' : id === 'ethereum' ? 'ETH' : 'SOL',
+              price: values.usd,
+              change24h: values.usd_24h_change,
+            }));
+            iframeRef.current?.contentWindow?.postMessage({
+              type: 'mcp_tool_result',
+              toolName: 'get-crypto-price',
+              data: coins,
+            }, '*');
+          })
+          .catch((err) => {
+            clearTimeout(timeout);
+            const code = err.name === 'AbortError' ? 'timeout' : (err.code ?? 'network-error');
+            iframeRef.current?.contentWindow?.postMessage({
+              type: 'mcp_tool_result',
+              toolName: 'get-crypto-price',
+              error: code,
+            }, '*');
+          });
+      }
     };
 
     window.addEventListener('message', handleMessage);
@@ -96,21 +135,16 @@ export function MessageBubble({ message }: Props) {
           <span className="msg-name">Chat AI</span>
           <span className="msg-time">{time}</span>
         </div>
-
         {message.uiResourceUri ? (
-          <div className="bubble bot-bubble mcp-ui-container" style={{ width: '100%', minWidth: '350px' }}>
-
-
-            <div style={{ width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden', position: 'relative', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <iframe
-                ref={iframeRef}
-                src={window.location.origin + (message.uiResourceUri?.replace('ui://mcp-app-demo', '') ?? '/mcp-app')}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                sandbox="allow-scripts allow-same-origin allow-forms"
-                allow="geolocation"
-                title="MCP App View"
-              />
-            </div>
+          <div style={{ width: '360px', height: '480px' }}>
+            <iframe
+              ref={iframeRef}
+              src={window.location.origin + message.uiResourceUri.replace('ui://mcp-app-demo', '')}
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              allow="geolocation"
+              title="MCP Widget"
+            />
           </div>
         ) : (
           <div

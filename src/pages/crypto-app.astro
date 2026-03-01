@@ -1,5 +1,5 @@
 ---
-import McpClientApp from "../components/mcp/McpClientApp.tsx";
+import CryptoApp from "../components/mcp/CryptoApp.tsx";
 ---
 
 <!doctype html>
@@ -7,7 +7,7 @@ import McpClientApp from "../components/mcp/McpClientApp.tsx";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MCP App View</title>
+    <title>Crypto Prices App View</title>
     <script src="https://cdn.tailwindcss.com" is:inline></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
@@ -27,6 +27,6 @@ import McpClientApp from "../components/mcp/McpClientApp.tsx";
     </style>
   </head>
   <body>
-    <McpClientApp client:only="react" />
+    <CryptoApp client:only="react" />
   </body>
 </html>
