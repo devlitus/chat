@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  dompurify: '>=3.3.2'
+
 patchedDependencies:
   '@astrojs/internal-helpers@0.7.5':
     hash: 5949c1fda397bfb48745c960de64eaeb3c9334776f0ff6f3267bec329ca3905e
@@ -43,6 +46,9 @@ importers:
       astro:
         specifier: ^5.18.0
         version: 5.18.0(@types/node@25.1.0)(@vercel/functions@2.2.13)(rollup@4.57.1)(typescript@5.9.3)
+      dompurify:
+        specifier: '>=3.3.2'
+        version: 3.3.2
       groq-sdk:
         specifier: ^0.37.0
         version: 0.37.0
@@ -1602,8 +1608,9 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.3.1:
-    resolution: {integrity: sha512-qkdCKzLNtrgPFP1Vo+98FRzJnBRGe4ffyCea9IwHB1fyxPOeNTHpLKYGd4Uk9xvNoH0ZoOjwZxNptyMwqrId1Q==}
+  dompurify@3.3.2:
+    resolution: {integrity: sha512-6obghkliLdmKa56xdbLOpUZ43pAR6xFy1uOrxBaIDjT+yaRuuybLjGS9eVBoSR/UPU5fq3OXClEHLJNGvbxKpQ==}
+    engines: {node: '>=20'}
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
@@ -4601,7 +4608,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.3.1:
+  dompurify@3.3.2:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -5100,7 +5107,7 @@ snapshots:
 
   isomorphic-dompurify@3.0.0:
     dependencies:
-      dompurify: 3.3.1
+      dompurify: 3.3.2
       jsdom: 28.1.0
     transitivePeerDependencies:
       - '@noble/hashes'
