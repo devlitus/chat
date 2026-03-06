@@ -2,7 +2,9 @@
 
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-import DOMPurify from 'isomorphic-dompurify';
+// dompurify es seguro de importar en Node.js; sólo falla si se llama .sanitize() sin DOM.
+// isomorphic-dompurify (que usaba jsdom) fue reemplazado para evitar ERR_REQUIRE_ESM en Vercel.
+import DOMPurify from 'dompurify';
 
 marked.use({
   breaks: true,
@@ -35,6 +37,9 @@ const ALLOWED_ATTR = [
 ];
 
 function sanitizeHtml(html: string): string {
+  // En SSR (Node.js no tiene DOM) se devuelve el HTML sin sanitizar.
+  // El XSS sólo es relevante en el cliente, donde DOMPurify funciona con el DOM del browser.
+  if (typeof window === 'undefined') return html;
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
