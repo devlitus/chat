@@ -25,7 +25,7 @@ export default function McpClientApp() {
     };
     window.addEventListener('message', handleMessage);
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-time' }, '*');
+      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-time' }, document.referrer || window.location.origin);
     }
     return () => window.removeEventListener('message', handleMessage);
   }, []);
@@ -33,7 +33,7 @@ export default function McpClientApp() {
   const handleSync = () => {
     setIsFetching(true);
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-time' }, '*');
+      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-time' }, document.referrer || window.location.origin);
     } else {
       setIsFetching(false);
     }

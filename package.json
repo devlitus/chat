@@ -13,20 +13,34 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@astrojs/node": "^9.5.2",
+    "@astrojs/node": "^9.5.4",
     "@astrojs/react": "^4.4.2",
     "@astrojs/vercel": "^9.0.4",
     "@mcp-ui/client": "^6.1.0",
     "@modelcontextprotocol/ext-apps": "^1.1.2",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@nanostores/react": "^1.0.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
-    "astro": "^5.17.1",
+    "astro": "^5.18.0",
+    "dompurify": "3.3.2",
     "groq-sdk": "^0.37.0",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",
+    "nanostores": "^1.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "dompurify": ">=3.3.2"
+    },
+    "patchedDependencies": {
+      "@astrojs/internal-helpers@0.7.5": "patches/@astrojs__internal-helpers@0.7.5.patch"
+    }
   },
   "devDependencies": {
     "@vitest/ui": "^4.0.18",

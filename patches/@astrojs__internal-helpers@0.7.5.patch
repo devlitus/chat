@@ -1,0 +1,26 @@
+diff --git a/dist/fs.js b/dist/fs.js
+index 8e78d211f10c73491a2e39f1469631e23504dc98..9df75196a993c0a896132022d6db1188b70b92a3 100644
+--- a/dist/fs.js
++++ b/dist/fs.js
+@@ -49,7 +49,20 @@ async function copyFilesToFolder(files, outDir, exclude = []) {
+       const realdest = fileURLToPath(new URL(nodePath.relative(commonAncestor, realpath), outDir));
+       const target = nodePath.relative(fileURLToPath(new URL(".", dest)), realdest);
+       if (!existsSync(dest)) {
+-        await fs.symlink(target, dest, isDir ? "dir" : "file");
++        try {
++          await fs.symlink(target, dest, isDir ? "dir" : "file");
++        } catch (e) {
++          if (e.code === "EPERM") {
++            // Windows fallback: copy instead of symlink
++            if (isDir) {
++              await fs.cp(realpath, fileURLToPath(dest), { recursive: true });
++            } else {
++              await fs.copyFile(realpath, fileURLToPath(dest));
++            }
++          } else {
++            throw e;
++          }
++        }
+       }
+     } else if (!isDir) {
+       await fs.copyFile(origin, dest);

@@ -1,7 +1,17 @@
 // src/components/react/SuggestionChips.tsx
 
 import { useCallback } from 'react';
-import { useChatState, useChatDispatch } from './ChatContext';
+import { useStore } from '@nanostores/react';
+import { $activeChatId, $isStreaming } from '../../stores/chat-store';
+import {
+  addUserMessage,
+  updateChatInList,
+  startStreaming,
+  updateStreaming,
+  finishStreaming,
+  setBotError,
+  setChats,
+} from '../../stores/chat-actions';
 import { addMessage, getMessagesByChatId, getChat, updateChat, getAllChats } from '../../lib/db';
 import { streamChat } from '../../lib/groq-client';
 
@@ -12,8 +22,8 @@ const suggestions = [
 ];
 
 export function SuggestionChips() {
-  const { activeChatId, isStreaming } = useChatState();
-  const dispatch = useChatDispatch();
+  const activeChatId = useStore($activeChatId);
+  const isStreaming = useStore($isStreaming);
 
   const handleClick = useCallback(
     async (text: string) => {
@@ -21,14 +31,14 @@ export function SuggestionChips() {
 
       // Reutilizar la misma logica de envio que ChatInput
       const userMessage = await addMessage(activeChatId, 'user', text);
-      dispatch({ type: 'ADD_USER_MESSAGE', message: userMessage });
+      addUserMessage(userMessage);
 
       // Generar titulo si es primer mensaje
       const chat = await getChat(activeChatId);
       if (chat && chat.messageCount <= 1) {
         const title = text.length > 50 ? text.substring(0, 50) + '...' : text;
         const updated = await updateChat(activeChatId, { title });
-        dispatch({ type: 'UPDATE_CHAT_IN_LIST', chat: updated });
+        updateChatInList(updated);
       }
 
       // Obtener historial
@@ -36,32 +46,43 @@ export function SuggestionChips() {
       const history = allMessages.map((m) => ({ role: m.role, content: m.content }));
 
       // Streaming
-      dispatch({ type: 'START_STREAMING' });
+      startStreaming();
       try {
         let fullContent = '';
+        let rafPending = false;
+
         for await (const token of streamChat(history)) {
           fullContent += token;
-          dispatch({ type: 'UPDATE_STREAMING', content: fullContent });
+          if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(() => {
+              updateStreaming(fullContent);
+              rafPending = false;
+            });
+          }
         }
+        // Flush final: garantiza que el atom refleja el contenido completo
+        // antes de que finishStreaming procese el mensaje
+        updateStreaming(fullContent);
         const botMessage = await addMessage(activeChatId, 'assistant', fullContent);
-        dispatch({ type: 'FINISH_STREAMING', message: botMessage });
+        finishStreaming(botMessage);
 
         // Refrescar lista de chats
         const chats = await getAllChats();
-        dispatch({ type: 'SET_CHATS', chats });
+        setChats(chats);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
-        dispatch({ type: 'SET_BOT_ERROR', error: `No se pudo obtener respuesta: ${errorMsg}` });
+        setBotError(`No se pudo obtener respuesta: ${errorMsg}`);
       }
     },
-    [activeChatId, isStreaming, dispatch]
+    [activeChatId, isStreaming]
   );
 
   return (
     <div className="chips">
       {suggestions.map((s) => (
         <button key={s.text} className="chip" onClick={() => handleClick(s.text)}>
-          <span className="material-symbols-outlined">{s.icon}</span>
+          <span className="material-symbols-outlined" aria-hidden="true">{s.icon}</span>
           {s.label}
         </button>
       ))}

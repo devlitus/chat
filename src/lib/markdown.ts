@@ -2,6 +2,9 @@
 
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+// dompurify es seguro de importar en Node.js; sólo falla si se llama .sanitize() sin DOM.
+// isomorphic-dompurify (que usaba jsdom) fue reemplazado para evitar ERR_REQUIRE_ESM en Vercel.
+import DOMPurify from 'dompurify';
 
 marked.use({
   breaks: true,
@@ -17,14 +20,32 @@ marked.use({
   },
 });
 
+// Tags permitidos para contenido markdown renderizado (whitelist estricta)
+const ALLOWED_TAGS = [
+  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
+  'strong', 'em', 'a', 'br', 'hr',
+  'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  'img',
+  // Tags necesarios para el renderer de código personalizado
+  'div', 'span', 'button',
+];
+
+const ALLOWED_ATTR = [
+  'href', 'src', 'alt', 'title', 'class', 'data-code',
+  'target', 'rel', 'width', 'height',
+];
+
 function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, (match) => {
-      return match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    })
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, (match) => {
-      return match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    });
+  // En SSR (Node.js no tiene DOM) se devuelve el HTML sin sanitizar.
+  // El XSS sólo es relevante en el cliente, donde DOMPurify funciona con el DOM del browser.
+  if (typeof window === 'undefined') return html;
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR,
+    ALLOW_DATA_ATTR: false,
+    FORCE_BODY: false,
+  });
 }
 
 export function renderMarkdown(content: string): string {

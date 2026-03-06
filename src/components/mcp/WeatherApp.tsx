@@ -26,52 +26,68 @@ export default function WeatherApp() {
   const [status, setStatus] = useState<FetchStatus>('loading');
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
-  const fetchFromCoords = useCallback(async (lat: number, lon: number) => {
-    try {
-      const [meteoRes, nominatimRes] = await Promise.all([
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m`),
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`),
-      ]);
-      const meteoData = await meteoRes.json();
-      const nominatimData = await nominatimRes.json();
-      const city = nominatimData.address?.city || nominatimData.address?.town || nominatimData.address?.village || nominatimData.address?.county || 'Ubicación desconocida';
-      setWeather({
-        city,
-        temperature: Math.round(meteoData.current.temperature_2m),
-        weatherCode: meteoData.current.weather_code,
-        windSpeed: Math.round(meteoData.current.wind_speed_10m),
-        humidity: meteoData.current.relative_humidity_2m,
-      });
-      setStatus('success');
-    } catch {
-      setStatus('fetch-error');
-    }
-  }, []);
-
+  // El iframe tiene allow="geolocation" — llama directamente a navigator.geolocation
   const fetchWeather = useCallback(() => {
     setStatus('loading');
     setWeather(null);
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'mcp_call_tool', toolName: 'get-location' }, '*');
-    } else {
+
+    if (!navigator.geolocation) {
       setStatus('geo-error');
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10_000);
+
+          const [meteoRes, geoRes] = await Promise.all([
+            fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m`,
+              { signal: controller.signal }
+            ),
+            fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=es`,
+              { signal: controller.signal }
+            ),
+          ]);
+          clearTimeout(timeout);
+
+          if (!meteoRes.ok) throw new Error(`open-meteo HTTP ${meteoRes.status}`);
+          const meteoData = await meteoRes.json();
+          const geoData = geoRes.ok ? await geoRes.json() : {};
+
+          if (!meteoData.current) throw new Error('open-meteo: sin datos de current');
+
+          const city =
+            geoData.city || geoData.locality || geoData.principalSubdivision || 'Ubicación desconocida';
+
+          setWeather({
+            city,
+            temperature: Math.round(meteoData.current.temperature_2m),
+            weatherCode: meteoData.current.weather_code,
+            windSpeed: Math.round(meteoData.current.wind_speed_10m),
+            humidity: meteoData.current.relative_humidity_2m,
+          });
+          setStatus('success');
+        } catch (err) {
+          console.error('[WeatherApp] fetch error:', err);
+          setStatus('fetch-error');
+        }
+      },
+      (err) => {
+        console.error('[WeatherApp] geolocation error:', err.code, err.message);
+        setStatus('geo-error');
+      },
+      { timeout: 10_000 }
+    );
   }, []);
 
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (!event.data || typeof event.data !== 'object') return;
-      if (event.data.source && typeof event.data.source === 'string' && event.data.source.includes('devtools')) return;
-      const data = event.data;
-      if (data.type === 'mcp_tool_result' && data.toolName === 'get-location') {
-        if (data.error) setStatus('geo-error');
-        else fetchFromCoords(data.latitude, data.longitude);
-      }
-    };
-    window.addEventListener('message', handleMessage);
     fetchWeather();
-    return () => window.removeEventListener('message', handleMessage);
-  }, [fetchWeather, fetchFromCoords]);
+  }, [fetchWeather]);
 
   const weatherInfo = weather ? getWeatherInfo(weather.weatherCode) : null;
 
@@ -103,7 +119,7 @@ export default function WeatherApp() {
                 Clima Actual
               </h2>
               <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mt-0.5">
-                Open-Meteo · Nominatim
+                Open-Meteo · BigDataCloud
               </p>
             </div>
           </div>

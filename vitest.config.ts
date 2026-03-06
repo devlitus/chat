@@ -4,6 +4,11 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    // Variables de entorno para tests (Groq está mockeado, no se hacen llamadas reales)
+    env: {
+      GROQ_API_KEY: 'test-key',
+    },
+
     // Entorno DOM para tests que usan localStorage/IndexedDB
     environment: 'happy-dom',
 

@@ -1,8 +1,10 @@
 // src/components/react/ChatHistoryList.tsx
 
 import { useCallback, useMemo, useState } from 'react';
-import { useChatState, useChatDispatch } from './ChatContext';
-import { deleteChat, getAllChats, getMessagesByChatId } from '../../lib/db';
+import { useStore } from '@nanostores/react';
+import { $chats, $activeChatId, $searchQuery } from '../../stores/chat-store';
+import { setChats, setActiveChat, removeChatFromList } from '../../stores/chat-actions';
+import { createChat, deleteChat, getAllChats, getMessagesByChatId } from '../../lib/db';
 import { updateSession } from '../../lib/session';
 import type { Chat } from '../../lib/db';
 
@@ -32,8 +34,9 @@ function groupChatsByDate(chats: Chat[]): Map<string, Chat[]> {
 }
 
 export function ChatHistoryList() {
-  const { chats, activeChatId, searchQuery } = useChatState();
-  const dispatch = useChatDispatch();
+  const chats = useStore($chats);
+  const activeChatId = useStore($activeChatId);
+  const searchQuery = useStore($searchQuery);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const filteredChats = useMemo(() => {
@@ -49,16 +52,16 @@ export function ChatHistoryList() {
       if (chatId === activeChatId) return;
       updateSession({ lastActiveChatId: chatId });
       const messages = await getMessagesByChatId(chatId);
-      dispatch({ type: 'SET_ACTIVE_CHAT', chatId, messages });
+      setActiveChat(chatId, messages);
     },
-    [activeChatId, dispatch]
+    [activeChatId]
   );
 
   const handleConfirmDelete = useCallback(
     async (chatId: string) => {
       setConfirmingId(null);
       await deleteChat(chatId);
-      dispatch({ type: 'REMOVE_CHAT_FROM_LIST', chatId });
+      removeChatFromList(chatId);
 
       if (chatId === activeChatId) {
         const remaining = await getAllChats();
@@ -66,18 +69,17 @@ export function ChatHistoryList() {
           const newActiveId = remaining[0].id;
           updateSession({ lastActiveChatId: newActiveId });
           const messages = await getMessagesByChatId(newActiveId);
-          dispatch({ type: 'SET_ACTIVE_CHAT', chatId: newActiveId, messages });
+          setActiveChat(newActiveId, messages);
         } else {
-          const { createChat } = await import('../../lib/db');
           const newChat = await createChat();
           updateSession({ lastActiveChatId: newChat.id });
           const allChats = await getAllChats();
-          dispatch({ type: 'SET_CHATS', chats: allChats });
-          dispatch({ type: 'SET_ACTIVE_CHAT', chatId: newChat.id, messages: [] });
+          setChats(allChats);
+          setActiveChat(newChat.id, []);
         }
       }
     },
-    [activeChatId, dispatch]
+    [activeChatId]
   );
 
   if (filteredChats.length === 0) {

@@ -1,22 +1,20 @@
 // src/components/react/NewChatButton.tsx
 
 import { useCallback } from 'react';
-import { useChatDispatch } from './ChatContext';
 import { createChat, getAllChats, getMessagesByChatId } from '../../lib/db';
 import { updateSession } from '../../lib/session';
+import { setChats, setActiveChat } from '../../stores/chat-actions';
 
 export function NewChatButton() {
-  const dispatch = useChatDispatch();
-
   const handleClick = useCallback(async () => {
     const chat = await createChat();
     updateSession({ lastActiveChatId: chat.id });
     const chats = await getAllChats();
     const messages = await getMessagesByChatId(chat.id);
 
-    dispatch({ type: 'SET_CHATS', chats });
-    dispatch({ type: 'SET_ACTIVE_CHAT', chatId: chat.id, messages });
-  }, [dispatch]);
+    setChats(chats);
+    setActiveChat(chat.id, messages);
+  }, []);
 
   return (
     <div className="new-chat-wrapper">

@@ -29,11 +29,22 @@ const DB_NAME = 'chat-app-db';
 const DB_VERSION = 1;
 
 // ============================================================
-// Inicializacion
+// Singleton de conexion IDB
 // ============================================================
 
+// Instancia de conexion reutilizable durante la vida del tab
+let _dbInstance: IDBDatabase | null = null;
+// Promesa en vuelo para evitar llamadas concurrentes a indexedDB.open()
+let _dbPromise: Promise<IDBDatabase> | null = null;
+
 function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  // Si ya hay conexion abierta y funcional, devolverla directamente (O(1))
+  if (_dbInstance) return Promise.resolve(_dbInstance);
+
+  // Si ya hay una apertura en curso, reusar la misma promesa (evita doble open)
+  if (_dbPromise) return _dbPromise;
+
+  _dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
@@ -52,9 +63,46 @@ function openDB(): Promise<IDBDatabase> {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      _dbInstance = request.result;
+      _dbPromise = null;
+
+      // Limpiar cache si la conexion se cierra externamente
+      // (e.g. error interno del browser, garbage collection agresivo)
+      _dbInstance.onclose = () => {
+        _dbInstance = null;
+      };
+
+      // Manejar solicitud de cierre por cambio de version en otra pestana
+      _dbInstance.onversionchange = () => {
+        _dbInstance?.close();
+        _dbInstance = null;
+      };
+
+      resolve(_dbInstance);
+    };
+
+    request.onerror = () => {
+      _dbPromise = null;
+      reject(request.error);
+    };
   });
+
+  return _dbPromise;
+}
+
+/**
+ * Resetea el singleton de conexion IDB.
+ * USO EXCLUSIVO EN TESTS — no llamar en produccion.
+ */
+export function resetDBConnection(): void {
+  if (_dbInstance) {
+    _dbInstance.onclose = null;
+    _dbInstance.onversionchange = null;
+    _dbInstance.close();
+  }
+  _dbInstance = null;
+  _dbPromise = null;
 }
 
 // Helper generico para transacciones
@@ -70,7 +118,7 @@ async function withStore<T>(
     const request = callback(store);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
+    // La conexion permanece abierta durante la vida del tab (patron recomendado por MDN/W3C)
   });
 }
 
@@ -117,8 +165,9 @@ export async function deleteChat(id: string): Promise<void> {
     tx.objectStore('messages').delete(msg.id);
   }
   return new Promise((resolve, reject) => {
-    tx.oncomplete = () => { db.close(); resolve(); };
-    tx.onerror = () => { db.close(); reject(tx.error); };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    // La conexion permanece abierta durante la vida del tab
   });
 }
 
@@ -165,6 +214,6 @@ export async function getMessagesByChatId(chatId: string): Promise<Message[]> {
       resolve(msgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
     };
     request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
+    // La conexion permanece abierta durante la vida del tab
   });
 }

@@ -1,0 +1,37 @@
+---
+// src/components/ChatShell.astro
+// Shell HTML estatico que sustituye el arbol React como contenedor de layout.
+// Monta cada island React de forma granular con su directiva client:*.
+// ChatInitializer es invisible (retorna null) y se encarga de llenar los stores.
+
+import SidebarHeader from './SidebarHeader.astro';
+import { ChatInitializer } from './react/ChatInitializer';
+import { NewChatButton } from './react/NewChatButton';
+import { SearchInput } from './react/SearchInput';
+import { ChatHistoryList } from './react/ChatHistoryList';
+import { UserProfile } from './react/UserProfile';
+import { ChatHeader } from './react/ChatHeader';
+import { MessageArea } from './react/MessageArea';
+import { ChatInput } from './react/ChatInput';
+---
+
+<!-- Inicializacion invisible: carga session + IndexedDB y llena los nanostores -->
+<ChatInitializer client:load />
+
+<div class="chat-layout">
+  <!-- Sidebar: estructura HTML estatica + islands granulares -->
+  <aside class="sidebar">
+    <SidebarHeader />
+    <NewChatButton client:load />
+    <SearchInput client:load />
+    <ChatHistoryList client:load />
+    <UserProfile client:idle />
+  </aside>
+
+  <!-- Main area: estructura HTML estatica + islands granulares -->
+  <main class="main-area">
+    <ChatHeader client:load />
+    <MessageArea client:load />
+    <ChatInput client:load />
+  </main>
+</div>
