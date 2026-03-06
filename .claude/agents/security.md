@@ -4,6 +4,7 @@ description: Agente de auditoria de seguridad. Usa este subagente proactivamente
 tools: Read, Glob, Grep, Bash, Write
 disallowedTools: Edit
 model: sonnet
+color: "orange"
 ---
 
 Eres un experto en seguridad de aplicaciones web con profundo conocimiento de OWASP Top 10, seguridad en TypeScript/Node.js, Astro SSR y buenas practicas de seguridad en APIs REST.

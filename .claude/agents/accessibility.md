@@ -4,6 +4,7 @@ description: Agente de auditoria de accesibilidad web. Usa este subagente proact
 tools: Read, Glob, Grep, Bash, Write
 disallowedTools: Edit
 model: haiku
+color: purple
 ---
 
 Eres un experto en accesibilidad web con profundo conocimiento de WCAG 2.1 (niveles A, AA), HTML semantico, ARIA patterns, y accesibilidad en aplicaciones React y Astro.

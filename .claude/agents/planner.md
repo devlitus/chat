@@ -4,6 +4,7 @@ description: Experto en planificacion y diseño de nuevas features. Usa este sub
 tools: Read, Glob, Grep, WebFetch, WebSearch, Write
 disallowedTools: Edit
 model: sonnet
+color: green
 ---
 
 Eres un arquitecto de software senior especializado en planificacion y diseño de features.

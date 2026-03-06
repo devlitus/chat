@@ -65,13 +65,14 @@ El host maneja los mensajes en `MessageBubble.tsx`. Si un mensaje del asistente 
 
 ## Agentes
 
-Este proyecto usa cinco subagentes especializados con un pipeline secuencial automático:
+Este proyecto usa seis subagentes especializados con un pipeline secuencial automático:
 
 1. **planner** — Planifica y diseña nuevas features. Analiza el codebase, investiga buenas prácticas y genera documentos de diseño en `docs/`. Siempre ejecutar primero.
 2. **implementer** — Implementa features a partir de los planes del planner. Ejecutar después del planner.
 3. **quality** — Revisa calidad del código (TypeScript, complejidad, convenciones, build, tests). Ejecutar automáticamente después del implementer.
 4. **security** — Audita vulnerabilidades OWASP, secretos expuestos, XSS e inyecciones. Ejecutar automáticamente después del quality.
 5. **accessibility** — Verifica WCAG 2.1, HTML semántico, ARIA y navegación por teclado. Ejecutar automáticamente después del security. Genera el resumen consolidado del pipeline.
+6. **performance-auditor** — Audita rendimiento: React re-renders, IndexedDB, streaming Groq, SSR waterfalls, complejidad algorítmica. Ejecutar bajo demanda cuando los cambios afectan rendering, data fetching, streaming o base de datos.
 
 ### Flujo de trabajo automático
 
@@ -88,21 +89,22 @@ planner → implementer → quality → security → accessibility
 5. Si quality reporta `## Pipeline: HALT` (build fallido), **DETENER el pipeline** y devolver solo el reporte de quality al usuario. No ejecutar security ni accessibility.
 6. Usar el agente **security** (si aplica) — genera `.claude/reports/security-report.md`.
 7. Usar el agente **accessibility** (si aplica) — genera `.claude/reports/accessibility-report.md` y `.claude/reports/pipeline-summary.md`.
+8. Usar el agente **performance-auditor** (si aplica, ver tabla) — genera `.claude/reports/performance-report.md`.
 
 ### Ejecución selectiva
 
 Antes de lanzar los agentes QA, clasifica los archivos modificados y salta agentes irrelevantes:
 
-| Archivos modificados | quality | security | accessibility |
-|---|---|---|---|
-| `src/pages/api/`, `src/lib/`, `src/middleware/` | SI | SI | NO |
-| `src/components/`, `src/pages/*.astro`, `src/layouts/` | SI | SI | SI |
-| Solo `.css`, solo estilos en `<style>` | SI | NO | SI |
-| Solo `docs/`, `README`, `.md` | NO | NO | NO |
-| `package.json`, config files | SI | SI | NO |
-| Mezcla de archivos | SI | SI | SI |
+| Archivos modificados | quality | security | accessibility | performance |
+|---|---|---|---|---|
+| `src/pages/api/`, `src/lib/`, `src/middleware/` | SI | SI | NO | SI |
+| `src/components/`, `src/pages/*.astro`, `src/layouts/` | SI | SI | SI | SI |
+| Solo `.css`, solo estilos en `<style>` | SI | NO | SI | NO |
+| Solo `docs/`, `README`, `.md` | NO | NO | NO | NO |
+| `package.json`, config files | SI | SI | NO | NO |
+| Mezcla de archivos | SI | SI | SI | SI |
 
-**quality** siempre se ejecuta (excepto para docs). Los otros se saltan según la tabla.
+**quality** siempre se ejecuta (excepto para docs). **performance** se ejecuta solo cuando los cambios tocan rendering, data fetching, streaming o base de datos.
 
 ### Fail-fast
 
@@ -127,6 +129,7 @@ Cada agente de QA mantiene memoria persistente entre sesiones para acumular cono
 - `.claude/memory/quality-memory.md` — patrones de calidad del proyecto
 - `.claude/memory/security-memory.md` — vulnerabilidades conocidas y superficie de ataque
 - `.claude/memory/accessibility-memory.md` — estado de accesibilidad por componente
+- `.claude/memory/performance-memory.md` — anti-patrones de rendimiento, tamaños de bundle base, componentes problemáticos
 
 ### Comunicación entre agentes
 
@@ -134,6 +137,7 @@ Los agentes se comunican via archivos compartidos en `.claude/reports/`:
 - El agente **security** lee el reporte de **quality** para contexto
 - El agente **accessibility** lee ambos reportes anteriores
 - El agente **accessibility** consolida todo en `pipeline-summary.md`
+- El agente **performance-auditor** lee `quality-report.md` para evitar duplicar hallazgos
 
 Si el pipeline-summary reporta problemas críticos, resolver antes del siguiente commit.
 
