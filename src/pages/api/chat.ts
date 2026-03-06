@@ -7,15 +7,6 @@ import { SYSTEM_PROMPT } from '../../lib/system-prompt';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
-  const apiKey = import.meta.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'GROQ_API_KEY is not configured' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-  const groq = new Groq({ apiKey });
-
   try {
     const body = await request.json();
     const { messages } = body;
@@ -35,6 +26,15 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
     }
+
+    const apiKey = import.meta.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'GROQ_API_KEY is not configured' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const groq = new Groq({ apiKey });
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
