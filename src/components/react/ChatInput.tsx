@@ -59,10 +59,21 @@ export function ChatInput() {
       startStreaming();
 
       let fullContent = '';
+      let rafPending = false;
+
       for await (const token of streamChat(history)) {
         fullContent += token;
-        updateStreaming(fullContent);
+        if (!rafPending) {
+          rafPending = true;
+          requestAnimationFrame(() => {
+            updateStreaming(fullContent);
+            rafPending = false;
+          });
+        }
       }
+      // Flush final: garantiza que el atom refleja el contenido completo
+      // antes de que finishStreaming procese el mensaje
+      updateStreaming(fullContent);
 
       // 5. Extraer marcador de widget si el modelo lo incluyó
       const widgetMatch = fullContent.match(WIDGET_RE);

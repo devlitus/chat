@@ -49,10 +49,21 @@ export function SuggestionChips() {
       startStreaming();
       try {
         let fullContent = '';
+        let rafPending = false;
+
         for await (const token of streamChat(history)) {
           fullContent += token;
-          updateStreaming(fullContent);
+          if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(() => {
+              updateStreaming(fullContent);
+              rafPending = false;
+            });
+          }
         }
+        // Flush final: garantiza que el atom refleja el contenido completo
+        // antes de que finishStreaming procese el mensaje
+        updateStreaming(fullContent);
         const botMessage = await addMessage(activeChatId, 'assistant', fullContent);
         finishStreaming(botMessage);
 
@@ -71,7 +82,7 @@ export function SuggestionChips() {
     <div className="chips">
       {suggestions.map((s) => (
         <button key={s.text} className="chip" onClick={() => handleClick(s.text)}>
-          <span className="material-symbols-outlined">{s.icon}</span>
+          <span className="material-symbols-outlined" aria-hidden="true">{s.icon}</span>
           {s.label}
         </button>
       ))}

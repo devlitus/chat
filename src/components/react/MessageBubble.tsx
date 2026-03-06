@@ -3,6 +3,7 @@
 import { useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Message } from '../../lib/db';
 import { renderMarkdown } from '../../lib/markdown';
+import { registerIframeHandler } from '../../lib/iframe-message-bus';
 
 interface Props {
   message: Message;
@@ -46,25 +47,27 @@ export function MessageBubble({ message }: Props) {
   }, [handleCopy]);
 
   useEffect(() => {
-    // Escuchar directamente los mensajes del Iframe hijo sin usar SDK
-    const handleMessage = (event: MessageEvent) => {
-      // Validar que viene de un iframe nuestro (opcional, pero buena práctica)
-      if (!iframeRef.current || event.source !== iframeRef.current.contentWindow) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
 
-      const data = event.data;
-      if (data && data.type === 'mcp_call_tool' && data.toolName === 'get-time') {
+    // Handler de despacho por toolName — se registra cuando el iframe este listo
+    const buildHandler = (iframeEl: HTMLIFrameElement) => (data: unknown) => {
+      const msg = data as { type?: string; toolName?: string };
+      if (!msg || msg.type !== 'mcp_call_tool') return;
+
+      if (msg.toolName === 'get-time') {
         const timeResult = new Date().toISOString();
-        iframeRef.current.contentWindow?.postMessage({
+        iframeEl.contentWindow?.postMessage({
           type: 'mcp_tool_result',
           toolName: 'get-time',
-          time: timeResult
+          time: timeResult,
         }, window.location.origin);
       }
 
-      if (data && data.type === 'mcp_call_tool' && data.toolName === 'get-location') {
+      if (msg.toolName === 'get-location') {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            iframeRef.current?.contentWindow?.postMessage({
+            iframeEl.contentWindow?.postMessage({
               type: 'mcp_tool_result',
               toolName: 'get-location',
               latitude: pos.coords.latitude,
@@ -72,7 +75,7 @@ export function MessageBubble({ message }: Props) {
             }, window.location.origin);
           },
           () => {
-            iframeRef.current?.contentWindow?.postMessage({
+            iframeEl.contentWindow?.postMessage({
               type: 'mcp_tool_result',
               toolName: 'get-location',
               error: 'permission-denied',
@@ -81,7 +84,7 @@ export function MessageBubble({ message }: Props) {
         );
       }
 
-      if (data && data.type === 'mcp_call_tool' && data.toolName === 'get-crypto-price') {
+      if (msg.toolName === 'get-crypto-price') {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
 
@@ -103,7 +106,7 @@ export function MessageBubble({ message }: Props) {
               price: values.usd,
               change24h: values.usd_24h_change,
             }));
-            iframeRef.current?.contentWindow?.postMessage({
+            iframeEl.contentWindow?.postMessage({
               type: 'mcp_tool_result',
               toolName: 'get-crypto-price',
               data: coins,
@@ -112,7 +115,7 @@ export function MessageBubble({ message }: Props) {
           .catch((err) => {
             clearTimeout(timeout);
             const code = err.name === 'AbortError' ? 'timeout' : (err.code ?? 'network-error');
-            iframeRef.current?.contentWindow?.postMessage({
+            iframeEl.contentWindow?.postMessage({
               type: 'mcp_tool_result',
               toolName: 'get-crypto-price',
               error: code,
@@ -121,9 +124,26 @@ export function MessageBubble({ message }: Props) {
       }
     };
 
-    window.addEventListener('message', handleMessage);
+    // Registrar en el evento load para garantizar que contentWindow este disponible
+    let cleanup: (() => void) | undefined;
+
+    const onLoad = () => {
+      const iframeWindow = iframe.contentWindow;
+      if (!iframeWindow) return;
+      cleanup = registerIframeHandler(iframeWindow, buildHandler(iframe));
+    };
+
+    // Si el iframe ya cargo (efecto ejecutado tarde), registrar directamente
+    if (iframe.contentDocument?.readyState === 'complete') {
+      onLoad();
+      return () => cleanup?.();
+    }
+
+    // Esperar el evento load del iframe
+    iframe.addEventListener('load', onLoad);
     return () => {
-      window.removeEventListener('message', handleMessage);
+      iframe.removeEventListener('load', onLoad);
+      cleanup?.();
     };
   }, []);
 
@@ -162,6 +182,10 @@ export function MessageBubble({ message }: Props) {
             const uiPath = message.uiResourceUri.replace('ui://mcp-app-demo', '');
             if (ALLOWED_UI_PATHS.some(p => uiPath.startsWith(p))) {
               const iframeSrc = window.location.origin + uiPath;
+              const iframeTitle =
+                uiPath.startsWith('/weather-app') ? 'Widget de clima' :
+                uiPath.startsWith('/crypto-app') ? 'Widget de criptomonedas' :
+                'Widget MCP';
               return (
                 <div style={{ width: '360px', height: '480px' }}>
                   <iframe
@@ -170,7 +194,7 @@ export function MessageBubble({ message }: Props) {
                     style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
                     sandbox="allow-scripts allow-same-origin allow-forms"
                     allow="geolocation"
-                    title="MCP Widget"
+                    title={iframeTitle}
                   />
                 </div>
               );

@@ -10,13 +10,16 @@ import {
   searchChats,
   addMessage,
   getMessagesByChatId,
+  resetDBConnection,
   type Chat,
   type Message,
 } from './db';
 
 describe('db.ts - IndexedDB CRUD', () => {
-  // Helper local para limpiar la DB entre tests
+  // Limpiar singleton y DB entre tests para evitar estado compartido
   beforeEach(async () => {
+    // Resetear el singleton antes de eliminar la DB (evita usar instancia stale)
+    resetDBConnection();
     const dbs = await indexedDB.databases();
     for (const db of dbs) {
       if (db.name) {
