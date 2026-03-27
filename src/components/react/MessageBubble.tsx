@@ -122,6 +122,22 @@ export function MessageBubble({ message }: Props) {
             }, window.location.origin);
           });
       }
+      if (msg.toolName === 'get-chart-data') {
+        const match = message.content.match(/<chart-data>([\s\S]*?)<\/chart-data>/);
+        let chartData = null;
+        if (match) {
+          try {
+            chartData = JSON.parse(match[1]);
+          } catch (e) {
+            console.error('Failed to parse chart-data JSON:', e);
+          }
+        }
+        iframeEl.contentWindow?.postMessage({
+          type: 'mcp_tool_result',
+          toolName: 'get-chart-data',
+          data: chartData,
+        }, window.location.origin);
+      }
     };
 
     // Registrar en el evento load para garantizar que contentWindow este disponible
@@ -178,7 +194,7 @@ export function MessageBubble({ message }: Props) {
         </div>
         {(() => {
           if (message.uiResourceUri) {
-            const ALLOWED_UI_PATHS = ['/mcp-app', '/crypto-app', '/weather-app', '/travel-app'];
+            const ALLOWED_UI_PATHS = ['/mcp-app', '/crypto-app', '/weather-app', '/travel-app', '/chart-app'];
             const uiPath = message.uiResourceUri.replace('ui://mcp-app-demo', '');
             if (ALLOWED_UI_PATHS.some(p => uiPath.startsWith(p))) {
               const iframeSrc = window.location.origin + uiPath;
@@ -186,9 +202,10 @@ export function MessageBubble({ message }: Props) {
                 uiPath.startsWith('/weather-app') ? 'Widget de clima' :
                   uiPath.startsWith('/crypto-app') ? 'Widget de criptomonedas' :
                     uiPath.startsWith('/travel-app') ? 'Widget de viajes' :
-                      'Widget MCP';
-              const iframeHeight = uiPath.startsWith('/travel-app') ? '520px' : '480px';
-              const iframeWidth = uiPath.startsWith('/travel-app') ? '640px' : '360px';
+                      uiPath.startsWith('/chart-app') ? 'Widget de gráfico' :
+                        'Widget MCP';
+              const iframeHeight = uiPath.startsWith('/travel-app') ? '520px' : uiPath.startsWith('/chart-app') ? '450px' : '480px';
+              const iframeWidth = uiPath.startsWith('/travel-app') ? '640px' : uiPath.startsWith('/chart-app') ? '640px' : '360px';
               return (
                 <div style={{ width: iframeWidth, height: iframeHeight }}>
                   <iframe
