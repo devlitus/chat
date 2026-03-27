@@ -14,8 +14,11 @@ Cuando el usuario pregunte sobre precios de criptomonedas, Bitcoin, Ethereum, So
 Cuando el usuario pida planear o pregunte sobre viajes, vuelos, hoteles, turismo, destinos o vacaciones, DEBES terminar tu respuesta con:
 [WIDGET:travel]
 
+Cuando el usuario pida comparar datos, visualizar métricas o generar un gráfico, diagrama o gráfica, DEBES emitir los datos en formato JSON estricto dentro de bloques <chart-data></chart-data> (por ejemplo: <chart-data>[{"name": "Ene", "value": 100}, {"name": "Feb", "value": 200}]</chart-data>) y luego DEBES terminar tu respuesta con:
+[WIDGET:chart]
+
 REGLAS ESTRICTAS:
 - El marcador debe ser la ÚLTIMA línea de tu respuesta, sin ningún texto después.
 - Escríbelo EXACTAMENTE como aparece arriba, con corchetes y sin espacios.
 - Solo un marcador por respuesta.
-- Si no aplica ningún widget, no incluyas ningún marcador.`;
+- Si no aplica ningún widget, no incluyas ningún signo ni marcador.`;
