@@ -7,7 +7,7 @@ export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [react()],
-  security: {
-    checkOrigin: false
-  }
+  site: process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
 });
