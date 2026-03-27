@@ -22,6 +22,48 @@ export function ChatInput() {
   const isStreaming = useStore($isStreaming);
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<{ id: string; name: string; type: string } | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeChatId || isStreaming) return;
+
+    try {
+      const fileName = file.name;
+      const lowerName = fileName.toLowerCase();
+      const isSpreadsheet = lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls');
+      const isPdf = lowerName.endsWith('.pdf');
+
+      if (!isSpreadsheet && !isPdf) {
+        setBotError("Tipo de archivo no admitido. Solo CSV, Excel y PDF.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Error al subir el archivo al servidor local');
+      const apiData = await res.json();
+      const tempFilename = apiData.filename;
+
+      setPendingFile({
+        id: tempFilename,
+        name: fileName,
+        type: isPdf ? 'Documento PDF' : 'Hoja de cálculo'
+      });
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+      setBotError(`No se pudo procesar el archivo: ${errorMsg}`);
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
 
   // Auto-resize textarea
   useEffect(() => {
@@ -33,10 +75,16 @@ export function ChatInput() {
   }, [text]);
 
   const sendMessage = useCallback(async () => {
-    const trimmed = text.trim();
-    if (!trimmed || !activeChatId || isStreaming) return;
+    let trimmed = text.trim();
+    if ((!trimmed && !pendingFile) || !activeChatId || isStreaming) return;
+
+    if (pendingFile) {
+      const filePrefix = `[Archivo subido a temp id: ${pendingFile.id}]: ${pendingFile.name} (${pendingFile.type})\n\n`;
+      trimmed = filePrefix + trimmed;
+    }
 
     setText('');
+    setPendingFile(null);
 
     try {
       // 1. Guardar mensaje del usuario
@@ -54,6 +102,42 @@ export function ChatInput() {
       // 3. Obtener historial
       const allMessages = await getMessagesByChatId(activeChatId);
       const history = allMessages.map((m) => ({ role: m.role, content: m.content }));
+
+      const latestSpreadsheetMsg = allMessages.slice().reverse().find(
+          m => m.role === 'user' && m.content.includes('(Hoja de cálculo)') && m.content.includes('id:')
+      );
+
+      const lowerMsg = trimmed.toLowerCase();
+      const isChartTopic =
+          lowerMsg.includes('gráfico') || lowerMsg.includes('grafico') ||
+          lowerMsg.includes('gráfica') || lowerMsg.includes('grafica') ||
+          lowerMsg.includes('diagrama') || lowerMsg.includes('compara') ||
+          lowerMsg.includes('visualiza') || lowerMsg.includes('cálculo') ||
+          lowerMsg.includes('calcula') || lowerMsg.includes('tabla');
+      
+      let forcedWidgetChart = false;
+
+      if (latestSpreadsheetMsg && isChartTopic) {
+        const match = latestSpreadsheetMsg.content.match(/temp id:\s*([a-zA-Z0-9_\-.]+)/);
+        if (match) {
+           const tempFileId = match[1];
+           try {
+             const dataRes = await fetch(`/api/read-temp?file=${tempFileId}`);
+             if (dataRes.ok) {
+                const { content } = await dataRes.json();
+                const lines = content.split('\n').filter(Boolean).slice(0, 30).join('\n');
+                
+                const lastHistoryUserMsg = history[history.length - 1];
+                if (lastHistoryUserMsg && lastHistoryUserMsg.role === 'user') {
+                    lastHistoryUserMsg.content += `\n\n[CONTEXTO DEL SISTEMA: El usuario subió un archivo previamente. Usa estos datos iniciales para tu análisis:\n${lines}\n\nREGLA ESTRICTA: Tu respuesta DEBE terminar obligatoriamente con este bloque JSON cerrado dentro de etiquetas <chart-data>: \n<chart-data>\n[ {"name": "Categoria", "value": 10} ]\n</chart-data>]`;
+                    forcedWidgetChart = true;
+                }
+             }
+           } catch (e) {
+             console.error("Error reading temp file data", e);
+           }
+        }
+      }
 
       // 4. Streaming + detección de widget por marcador del modelo
       startStreaming();
@@ -126,6 +210,10 @@ export function ChatInput() {
         else if (isChartTopic) uiResourceUri = uriMap.chart;
       }
 
+      if (forcedWidgetChart) {
+          uiResourceUri = uriMap.chart;
+      }
+
       const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, uiResourceUri);
       finishStreaming(botMessage);
 
@@ -153,10 +241,38 @@ export function ChatInput() {
 
   return (
     <div className="chat-input-area">
+      {pendingFile && (
+        <div className="pending-file-chip">
+          <span className="material-symbols-outlined pending-file-icon">
+            {pendingFile.type.includes('Hoja de cálculo') ? 'table_chart' : 'picture_as_pdf'}
+          </span>
+          <span className="pending-file-name">{pendingFile.name}</span>
+          <button 
+            onClick={() => setPendingFile(null)} 
+            className="pending-file-close"
+            title="Quitar archivo"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
       <div className="input-wrapper">
-        <button className="icon-btn" title="Attach file" aria-label="Attach file">
+        <button 
+          className="icon-btn" 
+          title="Attach file" 
+          aria-label="Attach file"
+          disabled={isStreaming}
+          onClick={() => fileInputRef.current?.click()}
+        >
           <span className="material-symbols-outlined" aria-hidden="true">attach_file</span>
         </button>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          hidden 
+          accept=".csv,.xlsx,.xls,.pdf" 
+          onChange={handleFileChange} 
+        />
         <textarea
           ref={textareaRef}
           placeholder="Type a message..."

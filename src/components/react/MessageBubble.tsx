@@ -164,18 +164,46 @@ export function MessageBubble({ message }: Props) {
   }, []);
 
   if (message.role === 'user') {
+    const fileMatch = message.content.match(/\[Archivo subido a temp id:\s*([a-zA-Z0-9_\-.]+)\]:\s*(.+?)\s*\((.+?)\)\n\n/);
+    let displayContent = message.content;
+    let attachmentData = null;
+
+    if (fileMatch) {
+      displayContent = message.content.replace(fileMatch[0], '').trim();
+      attachmentData = {
+        id: fileMatch[1],
+        name: fileMatch[2],
+        type: fileMatch[3]
+      };
+    }
+
     return (
       <div className="message-user">
         <div className="avatar user-avatar">
           <span className="material-symbols-outlined">person</span>
         </div>
-        <div className="msg-content">
+        <div className="msg-content flex flex-col items-end">
           <div className="meta">
             <span className="msg-time">{time}</span>
             <span className="msg-name">Tu</span>
           </div>
-          <div className="bubble user-bubble">
-            <p>{message.content}</p>
+          <div className="message-user-attachment-container">
+            {attachmentData && (
+              <div className="attachment-card">
+                <span className="material-symbols-outlined attachment-icon">
+                  {attachmentData.type.includes('Hoja de cálculo') ? 'table_chart' : 'picture_as_pdf'}
+                </span>
+                <div className="attachment-details">
+                  <p className="attachment-name">{attachmentData.name}</p>
+                  <p className="attachment-type">{attachmentData.type}</p>
+                </div>
+              </div>
+            )}
+            {displayContent && (
+              <div className="bubble user-bubble">
+                <p>{displayContent}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
