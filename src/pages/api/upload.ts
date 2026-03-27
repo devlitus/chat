@@ -31,18 +31,16 @@ export const POST: APIRoute = async ({ request }) => {
     await fs.mkdir(TEMP_DIR, { recursive: true }).catch(() => {});
     await cleanOldFiles();
 
-    const formData = await request.formData();
-    const file = formData.get('file');
+    const { filename, content } = await request.json();
 
-    if (!file || typeof file === 'string') {
-      return new Response(JSON.stringify({ error: 'Invalid file upload' }), { status: 400 });
+    if (!filename || !content) {
+      return new Response(JSON.stringify({ error: 'Invalid file upload data' }), { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(content, 'base64');
 
     // Sanitize filename to prevent directory traversal
-    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+    const safeName = filename.replace(/[^a-zA-Z0-9.\-_]/g, '');
     const uniqueName = Date.now() + '_' + safeName;
     const savePath = path.join(TEMP_DIR, uniqueName);
 
