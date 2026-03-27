@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Minimalist Chatbot Mobile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b8cee",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display selection:bg-primary/30">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Header -->
+<header class="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-background-light dark:bg-background-dark z-20">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">menu</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight text-primary">Chatbot</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">star</span>
+</button>
+<button class="px-3 py-1.5 text-sm font-semibold rounded-lg text-primary hover:bg-primary/10 transition-colors">
+                    Sign In
+                </button>
+</div>
+</header>
+<!-- Sidebar / History (Hidden by default, shown as an overlay in a real app) -->
+<!-- This is the 'sliding' component mentioned in the prompt -->
+<div class="absolute inset-0 z-40 pointer-events-none overflow-hidden">
+<div class="absolute left-0 top-0 h-full w-4/5 max-w-xs bg-white dark:bg-slate-900 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out pointer-events-auto border-r border-slate-200 dark:border-slate-800">
+<div class="p-4 flex flex-col h-full">
+<div class="flex items-center justify-between mb-6">
+<span class="font-bold text-slate-900 dark:text-slate-100">History</span>
+<button class="material-symbols-outlined text-slate-400">close</button>
+</div>
+<nav class="flex-1 overflow-y-auto hide-scrollbar space-y-1">
+<a class="flex items-center gap-3 p-3 rounded-xl bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+<span class="text-sm font-medium truncate">Travel Itinerary Planning</span>
+</a>
+<a class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+<span class="text-sm font-medium truncate text-slate-600 dark:text-slate-400">Recipe Ideas</span>
+</a>
+<a class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+<span class="text-sm font-medium truncate text-slate-600 dark:text-slate-400">JavaScript Debugging</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-slate-200 dark:border-slate-800 mt-auto">
+<a class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Settings</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Chat Area -->
+<main class="flex-1 overflow-y-auto px-4 py-6 space-y-6 hide-scrollbar flex flex-col">
+<!-- AI Message -->
+<div class="flex items-start gap-3 max-w-[85%]">
+<div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white text-sm">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1">AI Assistant</div>
+<div class="bg-slate-100 dark:bg-slate-800/80 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+<p class="text-[15px] leading-relaxed">Hello! I'm your AI assistant. How can I help you today? Whether it's planning, coding, or just chatting, I'm here for you.</p>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex flex-col gap-1.5 items-end self-end max-w-[85%]">
+<div class="text-xs font-medium text-slate-500 dark:text-slate-400 mr-1">You</div>
+<div class="bg-primary text-white px-4 py-3 rounded-2xl rounded-tr-none shadow-sm shadow-primary/20">
+<p class="text-[15px] leading-relaxed">Can you help me with a 3-day travel itinerary for Kyoto, Japan?</p>
+</div>
+</div>
+<!-- AI Message -->
+<div class="flex items-start gap-3 max-w-[85%]">
+<div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white text-sm">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1">AI Assistant</div>
+<div class="bg-slate-100 dark:bg-slate-800/80 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+<p class="text-[15px] leading-relaxed">Kyoto is wonderful! Here's a brief 3-day overview:</p>
+<ul class="mt-2 space-y-2 list-disc list-inside text-sm opacity-90">
+<li>Day 1: Arashiyama Bamboo Grove &amp; Tenryu-ji Temple.</li>
+<li>Day 2: Kinkaku-ji (Golden Pavilion) &amp; Fushimi Inari Shrine.</li>
+<li>Day 3: Gion District &amp; Kiyomizu-dera Temple.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex flex-col gap-1.5 items-end self-end max-w-[85%]">
+<div class="text-xs font-medium text-slate-500 dark:text-slate-400 mr-1">You</div>
+<div class="bg-primary text-white px-4 py-3 rounded-2xl rounded-tr-none shadow-sm shadow-primary/20">
+<p class="text-[15px] leading-relaxed">That looks great! Can we focus on more food-related stops for Day 2?</p>
+</div>
+</div>
+<!-- Empty space for typing -->
+<div class="h-10"></div>
+</main>
+<!-- Input Area -->
+<footer class="p-4 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800">
+<div class="relative flex items-center gap-2 max-w-4xl mx-auto">
+<div class="flex-1 relative">
+<input class="w-full bg-slate-100 dark:bg-slate-800/50 border-none focus:ring-2 focus:ring-primary/40 rounded-full py-3.5 pl-5 pr-12 text-[15px] text-slate-900 dark:text-slate-100 placeholder-slate-500" placeholder="Message..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 size-9 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined text-[20px]">arrow_upward</span>
+</button>
+</div>
+<button class="flex items-center justify-center size-12 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+</div>
+</footer>
+<!-- Bottom Navigation Bar (App-like feel) -->
+<nav class="flex items-center justify-around px-4 pb-6 pt-2 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800">
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">chat_bubble</span>
+<span class="text-[10px] font-bold text-primary">Chat</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">history</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">History</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">explore</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Explore</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">person</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Profile</span>
+</a>
+</nav>
+</div>
+</body></html>

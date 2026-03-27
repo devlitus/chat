@@ -178,16 +178,19 @@ export function MessageBubble({ message }: Props) {
         </div>
         {(() => {
           if (message.uiResourceUri) {
-            const ALLOWED_UI_PATHS = ['/mcp-app', '/crypto-app', '/weather-app'];
+            const ALLOWED_UI_PATHS = ['/mcp-app', '/crypto-app', '/weather-app', '/travel-app'];
             const uiPath = message.uiResourceUri.replace('ui://mcp-app-demo', '');
             if (ALLOWED_UI_PATHS.some(p => uiPath.startsWith(p))) {
               const iframeSrc = window.location.origin + uiPath;
               const iframeTitle =
                 uiPath.startsWith('/weather-app') ? 'Widget de clima' :
-                uiPath.startsWith('/crypto-app') ? 'Widget de criptomonedas' :
-                'Widget MCP';
+                  uiPath.startsWith('/crypto-app') ? 'Widget de criptomonedas' :
+                    uiPath.startsWith('/travel-app') ? 'Widget de viajes' :
+                      'Widget MCP';
+              const iframeHeight = uiPath.startsWith('/travel-app') ? '520px' : '480px';
+              const iframeWidth = uiPath.startsWith('/travel-app') ? '640px' : '360px';
               return (
-                <div style={{ width: '360px', height: '480px' }}>
+                <div style={{ width: iframeWidth, height: iframeHeight }}>
                   <iframe
                     ref={iframeRef}
                     src={iframeSrc}

@@ -15,7 +15,7 @@ import {
 import { addMessage, getMessagesByChatId, getChat, updateChat, getAllChats } from '../../lib/db';
 import { streamChat } from '../../lib/groq-client';
 
-const WIDGET_RE = /\[WIDGET:(weather|time|crypto)\]/i;
+const WIDGET_RE = /\[WIDGET:(weather|time|crypto|travel)\]/i;
 
 export function ChatInput() {
   const activeChatId = useStore($activeChatId);
@@ -83,6 +83,7 @@ export function ChatInput() {
         weather: 'ui://mcp-app-demo/weather-app',
         time: 'ui://mcp-app-demo/mcp-app',
         crypto: 'ui://mcp-app-demo/crypto-app',
+        travel: 'ui://mcp-app-demo/travel-app',
       };
 
       let uiResourceUri: string | undefined;
@@ -106,9 +107,16 @@ export function ChatInput() {
           lowerMsg.includes('eth') || lowerMsg.includes('solana') ||
           lowerMsg.includes('sol') || lowerMsg.includes('criptomoneda') ||
           (lowerMsg.includes('precio') && (lowerMsg.includes('moneda') || lowerMsg.includes('coin')));
+        const isTravelTopic =
+          lowerMsg.includes('viaje') || lowerMsg.includes('vuelo') ||
+          lowerMsg.includes('hotel') || lowerMsg.includes('destino') ||
+          lowerMsg.includes('turismo') || lowerMsg.includes('vacaciones') ||
+          lowerMsg.includes('viajar');
+
         if (isWeatherTopic) uiResourceUri = uriMap.weather;
         else if (isTimeTopic) uiResourceUri = uriMap.time;
         else if (isCryptoTopic) uiResourceUri = uriMap.crypto;
+        else if (isTravelTopic) uiResourceUri = uriMap.travel;
       }
 
       const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, uiResourceUri);
