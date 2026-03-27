@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import type { APIRoute } from 'astro';
 
-const TEMP_DIR = path.resolve('./temp');
+// Usar el directorio temporal nativo del sistema (Vercel permite escribir en /tmp)
+const TEMP_DIR = path.join(os.tmpdir(), 'chat_temp');
 
 async function cleanOldFiles() {
   try {

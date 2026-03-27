@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import type { APIRoute } from 'astro';
 
-const TEMP_DIR = path.resolve('./temp');
+const TEMP_DIR = path.join(os.tmpdir(), 'chat_temp');
 
 export const prerender = false;
 
