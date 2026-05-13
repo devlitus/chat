@@ -9,7 +9,8 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const { messages, model } = await request.json();
     if (!validateMessages(messages)) return new Response(JSON.stringify({ error: 'Messages array is required or has invalid format' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    const safeModel = typeof model === 'string' && ALLOWED_MODELS.has(model) ? model : undefined;
+    const modelBase = typeof model === 'string' ? model.split(':')[0] : '';
+    const safeModel = ALLOWED_MODELS.has(modelBase) ? model : undefined;
     const provider = import.meta.env.LLM_PROVIDER ?? 'ollama';
     const stream = provider === 'groq' ? await streamGroq(messages) : streamOllamaWithTools(messages, safeModel);
     return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } });

@@ -66,11 +66,14 @@ function ModelSelector() {
 export function ChatHeader() {
   const chats = useStore($chats);
   const activeChatId = useStore($activeChatId);
+  const selectedModel = useStore($selectedModel);
 
   const title = useMemo(() => {
     const chat = chats.find((c) => c.id === activeChatId);
     return chat?.title ?? 'Nuevo chat';
   }, [chats, activeChatId]);
+
+  const modelDisplayName = selectedModel ? selectedModel.split(':')[0] : 'gemma4';
 
   return (
     <header className="chat-header">
@@ -79,7 +82,7 @@ export function ChatHeader() {
           <span className="material-symbols-outlined star-icon">auto_awesome</span>
           <span>{title}</span>
         </h2>
-        <span className="badge">Model v4.0</span>
+        <span className="badge">{modelDisplayName}</span>
       </div>
       <div className="chat-header-right">
         <button
