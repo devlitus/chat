@@ -129,7 +129,7 @@ export function streamOllamaWithTools(messages: Message[], requestModel?: string
         done();
       } catch (e) {
         emit(`Error interno: ${e instanceof Error ? e.message : 'unknown'}`);
-        controller.close();
+        done();
       }
     },
   });
