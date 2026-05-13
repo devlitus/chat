@@ -1,0 +1,59 @@
+/* Input Buttons — Icon, Send, Right Group */
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.icon-btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.icon-btn .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.right-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.send-btn {
+  padding: 8px;
+  background: var(--color-primary);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(43, 140, 238, 0.2);
+  transition: background-color 0.15s;
+}
+
+.send-btn:hover {
+  background: rgba(43, 140, 238, 0.9);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-btn .material-symbols-outlined {
+  font-size: 20px;
+}
