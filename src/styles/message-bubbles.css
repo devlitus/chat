@@ -1,7 +1,7 @@
 /* Message Bubbles — User & Bot */
 .user-bubble {
   color: #fff;
-  font-size: 16px;
+  font-size: 24px;
   line-height: 1.625;
   background: var(--color-primary);
   padding: 16px;
@@ -17,7 +17,7 @@
 
 .bot-bubble {
   color: #e2e8f0;
-  font-size: 16px;
+  font-size: 24px;
   line-height: 1.625;
   background: var(--color-surface);
   border: 1px solid rgba(255, 255, 255, 0.05);
