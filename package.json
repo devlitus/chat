@@ -37,9 +37,6 @@
     "node": ">=22.12.0"
   },
   "pnpm": {
-    "overrides": {
-      "dompurify": ">=3.3.2"
-    },
     "patchedDependencies": {
       "@astrojs/internal-helpers@0.7.5": "patches/@astrojs__internal-helpers@0.7.5.patch"
     }
