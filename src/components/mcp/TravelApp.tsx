@@ -1,93 +1,578 @@
 import { useTravelData } from './travel/useTravelData';
+
+const styleId = '__travel-widget-keyframes';
+if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `@keyframes travel-spin { to { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+}
+
+const s = {
+  wrapper: {
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    padding: '12px',
+    background: 'transparent',
+    fontFamily: "'Inter', sans-serif",
+    overflow: 'hidden',
+  } as React.CSSProperties,
+  card: {
+    position: 'relative' as const,
+    width: '100%',
+    maxWidth: '620px',
+    height: '100%',
+    background: '#0b1221',
+    borderRadius: '24px',
+    padding: '3px',
+    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.2)',
+    border: '1px solid rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column' as const,
+  },
+  inner: {
+    background: '#0f1523',
+    borderRadius: '21.6px',
+    padding: '20px',
+    position: 'relative' as const,
+    overflow: 'hidden',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '20px',
+    flexShrink: 0,
+    position: 'relative' as const,
+    zIndex: 10,
+  },
+  iconBoxTravel: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)',
+    flexShrink: 0,
+    background: 'linear-gradient(135deg, #f43f5e 0%, #fb923c 100%)',
+  },
+  iconLarge: { fontSize: '28px' },
+  titleGradient: {
+    fontSize: '20px',
+    fontWeight: 700,
+    lineHeight: 1.25,
+    margin: 0,
+    background: 'linear-gradient(to right, #fb7185, #fca5a5)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  } as React.CSSProperties,
+  subtitle: {
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#6b7280',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase' as const,
+    margin: '2px 0 0',
+  },
+  form: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '16px',
+    position: 'relative' as const,
+    zIndex: 10,
+  },
+  formFields: {
+    flex: 1,
+    overflowY: 'auto' as const,
+    paddingRight: '4px',
+  },
+  fieldGroup: { marginBottom: '12px' },
+  label: {
+    display: 'block',
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#9ca3af',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.025em',
+    marginBottom: '6px',
+    marginLeft: '4px',
+  },
+  inputWrapper: { position: 'relative' as const },
+  inputIcon: {
+    position: 'absolute' as const,
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#6b7280',
+    fontSize: '20px',
+  },
+  input: {
+    width: '100%',
+    background: 'rgba(30,41,59,0.5)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    padding: '10px 16px 10px 40px',
+    color: '#fff',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'all 0.2s',
+    boxSizing: 'border-box' as const,
+  },
+  inputFocus: {
+    borderColor: 'rgba(251,113,133,0.5)',
+    background: '#1e293b',
+  },
+  select: {
+    width: '100%',
+    background: 'rgba(30,41,59,0.5)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    padding: '10px 16px 10px 40px',
+    color: '#fff',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'all 0.2s',
+    appearance: 'none' as const,
+    boxSizing: 'border-box' as const,
+  },
+  textarea: {
+    width: '100%',
+    background: 'rgba(30,41,59,0.5)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    padding: '10px 16px 10px 40px',
+    color: '#fff',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'all 0.2s',
+    resize: 'none' as const,
+    boxSizing: 'border-box' as const,
+    fontFamily: "'Inter', sans-serif",
+  },
+  textareaIcon: {
+    position: 'absolute' as const,
+    left: '12px',
+    top: '12px',
+    color: '#6b7280',
+    fontSize: '20px',
+  },
+  grid2: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '12px',
+    marginBottom: '12px',
+  },
+  btnWrapper: { position: 'relative' as const, flexShrink: 0, marginTop: '8px' },
+  btnGlow: {
+    position: 'absolute' as const,
+    inset: '-2px',
+    background: 'linear-gradient(to right, #f43f5e, #fb923c)',
+    borderRadius: '12px',
+    filter: 'blur(4px)',
+    opacity: 0.3,
+    transition: 'opacity 0.2s',
+    pointerEvents: 'none' as const,
+  },
+  btnPrimary: {
+    position: 'relative' as const,
+    width: '100%',
+    background: 'rgba(30,41,59,0.5)',
+    color: '#fff',
+    padding: '14px 16px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'all 0.2s',
+    border: '1px solid rgba(255,255,255,0.1)',
+    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    fontFamily: "'Inter', sans-serif",
+    fontSize: '14px',
+    fontWeight: 700,
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase' as const,
+  } as React.CSSProperties,
+  btnDisabled: { opacity: 0.5, cursor: 'not-allowed' } as React.CSSProperties,
+  loadingContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    padding: '32px 0',
+    position: 'relative' as const,
+    zIndex: 10,
+  },
+  loadingRelative: { position: 'relative' as const },
+  loadingSpinner: {
+    color: '#fb7185',
+    fontSize: '48px',
+    animation: 'travel-spin 1s linear infinite',
+  },
+  loadingPlane: {
+    position: 'absolute' as const,
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fdba74',
+    fontSize: '24px',
+  },
+  loadingTitle: { color: '#fff', fontWeight: 600, fontSize: '16px', margin: 0 },
+  loadingSub: { color: '#6b7280', fontSize: '14px', margin: '4px 0 0' },
+  errorContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    padding: '32px 0',
+    position: 'relative' as const,
+    zIndex: 10,
+    textAlign: 'center' as const,
+  },
+  errorIconBox: {
+    width: '64px',
+    height: '64px',
+    borderRadius: '50%',
+    background: 'rgba(239,68,68,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorIcon: { color: '#f87171', fontSize: '36px' },
+  errorTitle: { color: '#fff', fontWeight: 600, fontSize: '18px', margin: 0 },
+  errorMsg: { color: '#9ca3af', fontSize: '14px', margin: '4px 0 0' },
+  retryBtn: {
+    marginTop: '8px',
+    background: 'rgba(255,255,255,0.1)',
+    color: '#fff',
+    padding: '8px 24px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: 500,
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+    fontFamily: "'Inter', sans-serif",
+  },
+  resultsContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    position: 'relative' as const,
+    zIndex: 10,
+    height: '100%',
+    overflow: 'hidden',
+  },
+  resultsScroll: {
+    flex: 1,
+    overflowY: 'auto' as const,
+    paddingRight: '4px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '16px',
+  },
+  resultCard: {
+    background: 'rgba(30,41,59,0.3)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '16px',
+    padding: '16px',
+  },
+  resultHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '8px',
+    marginBottom: '8px',
+  },
+  resultTitle: { color: '#fff', fontWeight: 700, fontSize: '14px', lineHeight: 1.25, margin: 0 },
+  costBadge: {
+    background: 'rgba(16,185,129,0.2)',
+    color: '#6ee7b7',
+    fontSize: '12px',
+    fontWeight: 700,
+    padding: '2px 8px',
+    borderRadius: '9999px',
+    flexShrink: 0,
+  },
+  resultDesc: { color: '#9ca3af', fontSize: '12px', lineHeight: 1.5, margin: '0 0 12px' },
+  highlightTag: {
+    background: 'rgba(255,255,255,0.05)',
+    color: '#d1d5db',
+    fontSize: '10px',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    fontWeight: 600,
+    padding: '4px 8px',
+    borderRadius: '4px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    border: '1px solid rgba(255,255,255,0.05)',
+  },
+  newSearchBtn: {
+    marginTop: '16px',
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    color: '#fff',
+    padding: '10px',
+    borderRadius: '12px',
+    fontSize: '14px',
+    fontWeight: 600,
+    border: '1px solid rgba(255,255,255,0.1)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'background 0.2s',
+    fontFamily: "'Inter', sans-serif",
+  },
+  glowRose: {
+    position: 'absolute' as const,
+    top: 0,
+    right: 0,
+    width: '256px',
+    height: '256px',
+    background: 'rgba(244,63,94,0.05)',
+    borderRadius: '50%',
+    filter: 'blur(64px)',
+    transform: 'translate(50%, -50%)',
+    pointerEvents: 'none' as const,
+  },
+  glowOrange: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    width: '192px',
+    height: '192px',
+    background: 'rgba(251,146,60,0.05)',
+    borderRadius: '50%',
+    filter: 'blur(64px)',
+    transform: 'translate(-33%, 50%)',
+    pointerEvents: 'none' as const,
+  },
+  highlightChips: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '6px',
+  },
+};
+
 export default function TravelApp() {
-  const { step, destination, setDestination, budget, setBudget, days, setDays, interests, setInterests, suggestions, errorMsg, handleSubmit, setStep } = useTravelData();
+  const {
+    step, destination, setDestination,
+    budget, setBudget, days, setDays,
+    interests, setInterests,
+    suggestions, errorMsg, handleSubmit, setStep,
+  } = useTravelData();
+
+  const mi = (name: string, style?: React.CSSProperties) => (
+    <span className="material-symbols-rounded" style={style}>{name}</span>
+  );
+
   return (
-    <div className="h-screen flex items-start justify-center p-3 bg-transparent font-sans overflow-hidden">
-      <div className="relative w-full max-w-[620px] h-full bg-[#0b1221] rounded-3xl p-[3px] shadow-xl border border-white/5 overflow-hidden flex flex-col">
-        <div className="bg-[#0f1523] rounded-[1.35rem] p-5 relative overflow-hidden flex-1 flex flex-col">
-          <div className="flex items-center gap-4 mb-5 shrink-0 relative z-10">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0" style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #fb923c 100%)' }}>
-              <span className="material-symbols-rounded text-[28px]">flight_takeoff</span>
+    <div style={s.wrapper}>
+      <div style={s.card}>
+        <div style={s.inner}>
+          {/* Header */}
+          <div style={s.header}>
+            <div style={s.iconBoxTravel}>
+              {mi('flight_takeoff', s.iconLarge)}
             </div>
             <div>
-              <h2 className="text-xl font-bold leading-tight" style={{ backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(to right, #fb7185, #fca5a5)' }}>Planificador de Viajes</h2>
-              <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mt-0.5">Impulsado por IA</p>
+              <h2 style={s.titleGradient}>Planificador de Viajes</h2>
+              <p style={s.subtitle}>Impulsado por IA</p>
             </div>
           </div>
+
+          {/* Form */}
           {step === 'form' && (
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-4 relative z-10">
-              <div className="space-y-3 flex-1 overflow-y-auto pr-1">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 ml-1">Destino</label>
-                  <div className="relative">
-                    <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[20px]">location_on</span>
-                    <input required type="text" className="w-full bg-[#1e293b]/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-rose-400/50 focus:bg-[#1e293b] transition-colors placeholder:text-gray-600" placeholder="e.g. Kyoto, Japón" value={destination} onChange={e => setDestination(e.target.value)} />
+            <form onSubmit={handleSubmit} style={s.form}>
+              <div style={s.formFields}>
+                {/* Destination */}
+                <div style={s.fieldGroup}>
+                  <label style={s.label}>Destino</label>
+                  <div style={s.inputWrapper}>
+                    {mi('location_on', s.inputIcon)}
+                    <input
+                      required type="text"
+                      style={s.input}
+                      placeholder="e.g. Kyoto, Japón"
+                      value={destination}
+                      onChange={e => setDestination(e.target.value)}
+                      onFocus={e => { e.target.style.borderColor = 'rgba(251,113,133,0.5)'; e.target.style.background = '#1e293b'; }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(30,41,59,0.5)'; }}
+                    />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+
+                {/* Days + Budget */}
+                <div style={s.grid2}>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 ml-1">Días</label>
-                    <div className="relative">
-                      <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[20px]">calendar_today</span>
-                      <input required type="number" min="1" max="30" className="w-full bg-[#1e293b]/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-rose-400/50 focus:bg-[#1e293b] transition-colors placeholder:text-gray-600" value={days} onChange={e => setDays(e.target.value)} />
+                    <label style={s.label}>Días</label>
+                    <div style={s.inputWrapper}>
+                      {mi('calendar_today', s.inputIcon)}
+                      <input
+                        required type="number" min="1" max="30"
+                        style={s.input}
+                        value={days}
+                        onChange={e => setDays(e.target.value)}
+                        onFocus={e => { e.target.style.borderColor = 'rgba(251,113,133,0.5)'; e.target.style.background = '#1e293b'; }}
+                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(30,41,59,0.5)'; }}
+                      />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 ml-1">Presupuesto</label>
-                    <div className="relative">
-                      <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[20px]">payments</span>
-                      <select className="w-full bg-[#1e293b]/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-rose-400/50 focus:bg-[#1e293b] transition-colors appearance-none" value={budget} onChange={e => setBudget(e.target.value)}>
-                        <option value="Económico">Económico</option><option value="Standard">Standard</option><option value="Lujo">Lujo</option>
+                    <label style={s.label}>Presupuesto</label>
+                    <div style={s.inputWrapper}>
+                      {mi('payments', s.inputIcon)}
+                      <select
+                        style={s.select}
+                        value={budget}
+                        onChange={e => setBudget(e.target.value)}
+                        onFocus={e => { e.target.style.borderColor = 'rgba(251,113,133,0.5)'; e.target.style.background = '#1e293b'; }}
+                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(30,41,59,0.5)'; }}
+                      >
+                        <option value="Económico">Económico</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Lujo">Lujo</option>
                       </select>
                     </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 ml-1">Intereses (opcional)</label>
-                  <div className="relative">
-                    <span className="material-symbols-rounded absolute left-3 top-3 text-gray-500 text-[20px]">star</span>
-                    <textarea rows={2} className="w-full bg-[#1e293b]/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-rose-400/50 focus:bg-[#1e293b] transition-colors placeholder:text-gray-600 resize-none" placeholder="Museos, comida local, naturaleza..." value={interests} onChange={e => setInterests(e.target.value)} />
+
+                {/* Interests */}
+                <div style={s.fieldGroup}>
+                  <label style={s.label}>Intereses (opcional)</label>
+                  <div style={s.inputWrapper}>
+                    {mi('star', s.textareaIcon)}
+                    <textarea
+                      rows={2}
+                      style={s.textarea}
+                      placeholder="Museos, comida local, naturaleza..."
+                      value={interests}
+                      onChange={e => setInterests(e.target.value)}
+                      onFocus={e => { e.target.style.borderColor = 'rgba(251,113,133,0.5)'; e.target.style.background = '#1e293b'; }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(30,41,59,0.5)'; }}
+                    />
                   </div>
                 </div>
               </div>
-              <div className="relative group mt-2 shrink-0">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500 to-orange-400 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-200 pointer-events-none"></div>
-                <button type="submit" disabled={!destination.trim()} className="relative w-full bg-[#1e293b]/50 hover:bg-[#1e293b] text-white py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 border border-white/10 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                  <span className="material-symbols-rounded text-[20px]">explore</span>
-                  <span className="font-bold text-sm tracking-wide uppercase">Descubrir Aventuras</span>
+
+              {/* Submit */}
+              <div style={s.btnWrapper}
+                onMouseEnter={(e) => { const g = e.currentTarget.querySelector('[data-glow]') as HTMLElement; if (g) g.style.opacity = '0.6'; }}
+                onMouseLeave={(e) => { const g = e.currentTarget.querySelector('[data-glow]') as HTMLElement; if (g) g.style.opacity = '0.3'; }}
+              >
+                <div data-glow style={s.btnGlow}></div>
+                <button
+                  type="submit"
+                  disabled={!destination.trim()}
+                  style={{
+                    ...s.btnPrimary,
+                    ...(!destination.trim() ? s.btnDisabled : {}),
+                    background: !destination.trim() ? 'rgba(30,41,59,0.5)' : undefined,
+                  }}
+                >
+                  {mi('explore', { fontSize: '20px' })}
+                  <span>Descubrir Aventuras</span>
                 </button>
               </div>
             </form>
           )}
+
+          {/* Loading */}
           {step === 'loading' && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 py-8 relative z-10">
-              <div className="relative"><span className="material-symbols-rounded animate-spin text-rose-400 text-[48px]">autorenew</span><span className="material-symbols-rounded absolute inset-0 flex items-center justify-center text-orange-300 text-[24px]">airplanemode_active</span></div>
-              <div className="text-center space-y-1"><h3 className="text-white font-semibold">Diseñando tu viaje ideal</h3><p className="text-gray-500 text-sm">Consultando agentes expertos...</p></div>
+            <div style={s.loadingContainer}>
+              <div style={s.loadingRelative}>
+                {mi('autorenew', s.loadingSpinner)}
+                <div style={s.loadingPlane}>
+                  {mi('airplanemode_active')}
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h3 style={s.loadingTitle}>Diseñando tu viaje ideal</h3>
+                <p style={s.loadingSub}>Consultando agentes expertos...</p>
+              </div>
             </div>
           )}
+
+          {/* Error */}
           {step === 'error' && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 py-8 relative z-10 text-center">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center"><span className="material-symbols-rounded text-red-400 text-[36px]">error</span></div>
-              <div><h3 className="text-white font-semibold text-lg">Vaya, hubo un problema</h3><p className="text-gray-400 text-sm mt-1">{errorMsg}</p></div>
-              <button onClick={() => setStep('form')} className="mt-2 bg-white/10 hover:bg-white/15 text-white py-2 px-6 rounded-lg text-sm font-medium transition-colors">Intentar de nuevo</button>
+            <div style={s.errorContainer}>
+              <div style={s.errorIconBox}>
+                {mi('error', s.errorIcon)}
+              </div>
+              <div>
+                <h3 style={s.errorTitle}>Vaya, hubo un problema</h3>
+                <p style={s.errorMsg}>{errorMsg}</p>
+              </div>
+              <button
+                onClick={() => setStep('form')}
+                style={s.retryBtn}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              >
+                Intentar de nuevo
+              </button>
             </div>
           )}
+
+          {/* Results */}
           {step === 'results' && (
-            <div className="flex-1 flex flex-col relative z-10 h-full overflow-hidden">
-              <div className="flex-1 overflow-y-auto pr-1 space-y-4 pb-2">
+            <div style={s.resultsContainer}>
+              <div style={s.resultsScroll}>
                 {suggestions.map((sug, i) => (
-                  <div key={sug.id || i} className="bg-[#1e293b]/30 border border-white/10 rounded-2xl p-4 hover:bg-[#1e293b]/50 transition-colors">
-                    <div className="flex justify-between items-start gap-2 mb-2"><h4 className="text-white font-bold text-sm leading-tight">{sug.title}</h4><span className="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">{sug.estimatedCost}</span></div>
-                    <p className="text-gray-400 text-xs leading-relaxed mb-3">{sug.description}</p>
-                    {sug.highlights?.length > 0 && (<div className="flex flex-wrap gap-1.5">{sug.highlights.map((hl, j) => (<span key={j} className="bg-white/5 text-gray-300 text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded inline-flex items-center gap-1 border border-white/5"><span className="material-symbols-rounded text-[14px] text-orange-400">push_pin</span>{hl}</span>))}</div>)}
+                  <div key={sug.id || i} style={s.resultCard}>
+                    <div style={s.resultHeader}>
+                      <h4 style={s.resultTitle}>{sug.title}</h4>
+                      <span style={s.costBadge}>{sug.estimatedCost}</span>
+                    </div>
+                    <p style={s.resultDesc}>{sug.description}</p>
+                    {sug.highlights?.length > 0 && (
+                      <div style={s.highlightChips}>
+                        {sug.highlights.map((hl, j) => (
+                          <span key={j} style={s.highlightTag}>
+                            {mi('push_pin', { fontSize: '14px', color: '#fb923c' })}
+                            {hl}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-              <button onClick={() => setStep('form')} className="mt-4 w-full bg-white/5 hover:bg-white/10 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-white/10"><span className="material-symbols-rounded text-[18px]">refresh</span>Nueva Búsqueda</button>
+              <button
+                onClick={() => setStep('form')}
+                style={s.newSearchBtn}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+              >
+                {mi('refresh', { fontSize: '18px' })}
+                Nueva Búsqueda
+              </button>
             </div>
           )}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
+
+          {/* Decorative glows */}
+          <div style={s.glowRose}></div>
+          <div style={s.glowOrange}></div>
         </div>
       </div>
     </div>
