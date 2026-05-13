@@ -13,3 +13,4 @@ export const $isStreaming = atom<boolean>(false);
 export const $streamingContent = atom<string>('');
 export const $botError = atom<string | null>(null);
 export const $searchQuery = atom<string>('');
+export const $selectedModel = atom<string>('');
