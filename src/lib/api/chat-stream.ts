@@ -5,6 +5,8 @@ import { TOOL_DEFINITIONS, executeTool, type ToolCall } from './tools';
 type Message = { role: 'user' | 'assistant'; content: string };
 type OllamaMessage = { role: 'user' | 'assistant' | 'system' | 'tool'; content: string | null; tool_calls?: ToolCall[]; tool_call_id?: string };
 
+const OLLAMA_TIMEOUT_MS = 30_000;
+
 export async function streamOllama(messages: Message[], requestModel?: string): Promise<ReadableStream> {
   const baseUrl = import.meta.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
   const model = requestModel || import.meta.env.OLLAMA_MODEL || 'gemma4';
@@ -37,18 +39,6 @@ export async function streamGroq(messages: Message[]): Promise<ReadableStream> {
   });
 }
 
-function errorStream(msg: string): ReadableStream {
-  return new ReadableStream({
-    start(controller) {
-      const encoder = new TextEncoder();
-      const chunk = { choices: [{ delta: { content: msg } }] };
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
-}
-
 function safeOllamaBaseUrl(): string {
   const raw = import.meta.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
   try {
@@ -60,65 +50,89 @@ function safeOllamaBaseUrl(): string {
   }
 }
 
-export async function streamOllamaWithTools(messages: Message[], requestModel?: string): Promise<ReadableStream> {
-  const baseUrl = safeOllamaBaseUrl();
-  const model = requestModel || import.meta.env.OLLAMA_MODEL || 'gemma4';
-  const MAX_ITERATIONS = 5;
-
-  const history: OllamaMessage[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    ...messages,
-  ];
-
-  for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+async function fetchOllama(url: string, body: unknown): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
+  try {
+    return await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ollama' },
-      body: JSON.stringify({ model, messages: history, tools: TOOL_DEFINITIONS, tool_choice: 'auto', stream: false }),
+      body: JSON.stringify(body),
+      signal: controller.signal,
     });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-    if (!response.ok) {
-      const err = await response.text();
-      return errorStream(`Error de Ollama (${response.status}): ${err}`);
-    }
-
-    const data = await response.json() as { choices?: { finish_reason: string; message: OllamaMessage & { tool_calls?: ToolCall[] } }[] };
-    const choice = data.choices?.[0];
-
-    if (!choice) return errorStream('Respuesta inesperada de Ollama: sin choices.');
-
-    if (choice.finish_reason === 'tool_calls') {
-      const assistantMsg = choice.message;
-      history.push(assistantMsg);
-
-      const toolCalls = assistantMsg.tool_calls ?? [];
-      for (const toolCall of toolCalls) {
-        let result: string;
-        try {
-          const args = JSON.parse(toolCall.function.arguments || '{}') as Record<string, unknown>;
-          result = await executeTool(toolCall.function.name, args);
-        } catch (e) {
-          result = `Error ejecutando herramienta: ${e instanceof Error ? e.message : 'unknown'}`;
-        }
-        history.push({ role: 'tool', tool_call_id: toolCall.id, content: result });
-      }
-      continue;
-    }
-
-    const finalContent = choice.message?.content ?? '';
-
-    return new ReadableStream({
-      start(controller) {
-        const encoder = new TextEncoder();
-        const chunk = { choices: [{ delta: { content: finalContent } }] };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+export function streamOllamaWithTools(messages: Message[], requestModel?: string): ReadableStream {
+  return new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+      const emit = (content: string) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`));
+      };
+      const done = () => {
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
-      },
-    });
-  }
+      };
 
-  return errorStream('El agente alcanzó el límite de iteraciones sin completar la tarea.');
+      const baseUrl = safeOllamaBaseUrl();
+      const model = requestModel || import.meta.env.OLLAMA_MODEL || 'gemma4';
+      const MAX_ITERATIONS = 5;
+      const history: OllamaMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }, ...messages];
+
+      try {
+        for (let i = 0; i < MAX_ITERATIONS; i++) {
+          const response = await fetchOllama(`${baseUrl}/v1/chat/completions`, {
+            model, messages: history, tools: TOOL_DEFINITIONS, tool_choice: 'auto', stream: false,
+          });
+
+          if (!response.ok) {
+            const err = await response.text();
+            emit(`Error de Ollama (${response.status}): ${err}`);
+            return done();
+          }
+
+          const data = await response.json() as { choices?: { finish_reason: string; message: OllamaMessage & { tool_calls?: ToolCall[] } }[] };
+          const choice = data.choices?.[0];
+
+          if (!choice) {
+            emit('Respuesta inesperada de Ollama: sin choices.');
+            return done();
+          }
+
+          if (choice.finish_reason === 'tool_calls') {
+            const assistantMsg = choice.message;
+            history.push(assistantMsg);
+
+            const results = await Promise.all(
+              (assistantMsg.tool_calls ?? []).map(async (toolCall) => {
+                try {
+                  const args = JSON.parse(toolCall.function.arguments || '{}') as Record<string, unknown>;
+                  const content = await executeTool(toolCall.function.name, args);
+                  return { tool_call_id: toolCall.id, content };
+                } catch (e) {
+                  return { tool_call_id: toolCall.id, content: `Error ejecutando herramienta: ${e instanceof Error ? e.message : 'unknown'}` };
+                }
+              })
+            );
+            for (const r of results) history.push({ role: 'tool', ...r });
+            continue;
+          }
+
+          emit(choice.message?.content ?? '');
+          return done();
+        }
+
+        emit('El agente alcanzó el límite de iteraciones sin completar la tarea.');
+        done();
+      } catch (e) {
+        emit(`Error interno: ${e instanceof Error ? e.message : 'unknown'}`);
+        controller.close();
+      }
+    },
+  });
 }
 
 export function validateMessages(messages: unknown): messages is Message[] {
