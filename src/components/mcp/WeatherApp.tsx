@@ -1,14 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-
-interface WeatherData {
-  city: string;
-  temperature: number;
-  weatherCode: number;
-  windSpeed: number;
-  humidity: number;
-}
-
-type FetchStatus = 'idle' | 'loading' | 'success' | 'geo-error' | 'fetch-error';
+import { useEffect } from 'react';
+import { useWeatherData } from './weather/useWeatherData';
 
 function getWeatherInfo(code: number): { icon: string; label: string } {
   if (code === 0) return { icon: 'sunny', label: 'Despejado' };
@@ -21,110 +12,25 @@ function getWeatherInfo(code: number): { icon: string; label: string } {
   if (code >= 95 && code <= 99) return { icon: 'thunderstorm', label: 'Tormenta' };
   return { icon: 'partly_cloudy_day', label: 'Desconocido' };
 }
-
 export default function WeatherApp() {
-  const [status, setStatus] = useState<FetchStatus>('loading');
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-
-  // El iframe tiene allow="geolocation" — llama directamente a navigator.geolocation
-  const fetchWeather = useCallback(() => {
-    setStatus('loading');
-    setWeather(null);
-
-    if (!navigator.geolocation) {
-      setStatus('geo-error');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10_000);
-
-          const [meteoRes, geoRes] = await Promise.all([
-            fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m`,
-              { signal: controller.signal }
-            ),
-            fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=es`,
-              { signal: controller.signal }
-            ),
-          ]);
-          clearTimeout(timeout);
-
-          if (!meteoRes.ok) throw new Error(`open-meteo HTTP ${meteoRes.status}`);
-          const meteoData = await meteoRes.json();
-          const geoData = geoRes.ok ? await geoRes.json() : {};
-
-          if (!meteoData.current) throw new Error('open-meteo: sin datos de current');
-
-          const city =
-            geoData.city || geoData.locality || geoData.principalSubdivision || 'Ubicación desconocida';
-
-          setWeather({
-            city,
-            temperature: Math.round(meteoData.current.temperature_2m),
-            weatherCode: meteoData.current.weather_code,
-            windSpeed: Math.round(meteoData.current.wind_speed_10m),
-            humidity: meteoData.current.relative_humidity_2m,
-          });
-          setStatus('success');
-        } catch (err) {
-          console.error('[WeatherApp] fetch error:', err);
-          setStatus('fetch-error');
-        }
-      },
-      (err) => {
-        console.error('[WeatherApp] geolocation error:', err.code, err.message);
-        setStatus('geo-error');
-      },
-      { timeout: 10_000 }
-    );
-  }, []);
-
-  useEffect(() => {
-    fetchWeather();
-  }, [fetchWeather]);
+  const { status, weather, fetchWeather } = useWeatherData();
+  useEffect(() => { fetchWeather(); }, [fetchWeather]);
 
   const weatherInfo = weather ? getWeatherInfo(weather.weatherCode) : null;
-
   return (
     <div className="min-h-screen flex items-start justify-center p-3 pt-3 bg-transparent font-sans">
-      {/* Outer card */}
       <div className="relative w-full max-w-sm bg-[#0b1221] rounded-3xl p-[3px] shadow-xl border border-white/5 overflow-hidden">
-        {/* Inner panel */}
         <div className="bg-[#0f1523] rounded-[1.35rem] p-5 relative overflow-hidden">
-
-          {/* Header */}
           <div className="flex items-center gap-4 mb-5">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0"
-              style={{ background: 'linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%)' }}
-            >
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0" style={{ background: 'linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%)' }}>
               <span className="material-symbols-rounded text-[28px]">wb_sunny</span>
             </div>
             <div>
-              <h2
-                className="text-xl font-bold leading-tight"
-                style={{
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundImage: 'linear-gradient(to right, #60a5fa, #22d3ee)',
-                }}
-              >
-                Clima Actual
-              </h2>
-              <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mt-0.5">
-                Open-Meteo · BigDataCloud
-              </p>
+              <h2 className="text-xl font-bold leading-tight" style={{ backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(to right, #60a5fa, #22d3ee)' }}>Clima Actual</h2>
+              <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mt-0.5">Open-Meteo · BigDataCloud</p>
             </div>
           </div>
 
-          {/* Loading */}
           {status === 'loading' && (
             <div className="flex flex-col items-center gap-3 py-8">
               <span className="material-symbols-rounded animate-spin text-[#22d3ee] text-[36px]">sync</span>
@@ -132,7 +38,6 @@ export default function WeatherApp() {
             </div>
           )}
 
-          {/* Geo error */}
           {status === 'geo-error' && (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <span className="material-symbols-rounded text-red-400 text-[36px]">location_off</span>
@@ -141,7 +46,6 @@ export default function WeatherApp() {
             </div>
           )}
 
-          {/* Fetch error */}
           {status === 'fetch-error' && (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <span className="material-symbols-rounded text-red-400 text-[36px]">cloud_off</span>
@@ -150,16 +54,12 @@ export default function WeatherApp() {
             </div>
           )}
 
-          {/* Success */}
           {status === 'success' && weather && weatherInfo && (
             <div className="space-y-2.5 mb-5">
-              {/* City */}
               <div className="bg-[#080c14] border border-white/5 rounded-2xl px-4 py-3 flex items-center gap-3">
                 <span className="material-symbols-rounded text-[#22d3ee] text-[20px]">location_on</span>
                 <p className="text-white text-sm font-semibold truncate">{weather.city}</p>
               </div>
-
-              {/* Temperature */}
               <div className="bg-[#080c14] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-rounded text-[#22d3ee] text-[44px]">{weatherInfo.icon}</span>
@@ -169,45 +69,27 @@ export default function WeatherApp() {
                   </div>
                 </div>
               </div>
-
-              {/* Wind + Humidity */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="bg-[#080c14] border border-white/5 rounded-2xl px-4 py-3 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[#22d3ee] text-[20px]">air</span>
-                  <div>
-                    <p className="text-xs text-gray-600 uppercase tracking-wide">Viento</p>
-                    <p className="text-white font-semibold text-sm">{weather.windSpeed} km/h</p>
-                  </div>
+                  <div><p className="text-xs text-gray-600 uppercase tracking-wide">Viento</p><p className="text-white font-semibold text-sm">{weather.windSpeed} km/h</p></div>
                 </div>
                 <div className="bg-[#080c14] border border-white/5 rounded-2xl px-4 py-3 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[#22d3ee] text-[20px]">water_drop</span>
-                  <div>
-                    <p className="text-xs text-gray-600 uppercase tracking-wide">Humedad</p>
-                    <p className="text-white font-semibold text-sm">{weather.humidity}%</p>
-                  </div>
+                  <div><p className="text-xs text-gray-600 uppercase tracking-wide">Humedad</p><p className="text-white font-semibold text-sm">{weather.humidity}%</p></div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Button */}
           <div className="relative group mt-5">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-200 pointer-events-none"></div>
-            <button
-              onClick={fetchWeather}
-              disabled={status === 'loading'}
-              className="relative w-full bg-[#1e293b]/50 hover:bg-[#1e293b] text-white py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 border border-white/10 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed font-sans"
-            >
-              <span className={`material-symbols-rounded text-[20px] ${status === 'loading' ? 'animate-spin' : ''}`}>
-                refresh
-              </span>
-              <span className="font-bold text-sm tracking-wide uppercase">
-                {status === 'loading' ? 'Actualizando...' : 'Actualizar'}
-              </span>
+            <button onClick={fetchWeather} disabled={status === 'loading'} className="relative w-full bg-[#1e293b]/50 hover:bg-[#1e293b] text-white py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 border border-white/10 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed font-sans">
+              <span className={`material-symbols-rounded text-[20px] ${status === 'loading' ? 'animate-spin' : ''}`}>refresh</span>
+              <span className="font-bold text-sm tracking-wide uppercase">{status === 'loading' ? 'Actualizando...' : 'Actualizar'}</span>
             </button>
           </div>
 
-          {/* Background glow blobs */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
         </div>
