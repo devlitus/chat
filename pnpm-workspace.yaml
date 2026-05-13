@@ -1,3 +1,8 @@
+allowBuilds:
+  '@modelcontextprotocol/ext-apps': true
+  esbuild: true
+  sharp: true
+
 onlyBuiltDependencies:
   - esbuild
   - sharp

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "orquestador",
+  "instructions": [
+    ".agents/memory/architecture.md",
+    ".agents/memory/ui_and_styling.md",
+    ".agents/memory/performance.md",
+    ".agents/memory/security.md",
+    ".agents/memory/rules.md"
+  ]
+}
