@@ -16,7 +16,7 @@ function ModelSelector() {
         const list: string[] = data.models ?? [];
         setModels(list);
         if (list.length > 0 && !selectedModel) {
-          $selectedModel.set(list[0]);
+          $selectedModel.set(list.includes('gemma4') ? 'gemma4' : list[0]);
         }
       })
       .catch(() => {});
