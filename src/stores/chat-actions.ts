@@ -1,6 +1,7 @@
-import { $initialized, $session, $chats, $activeChatId, $messages, $isStreaming, $streamingContent, $botError, $searchQuery } from './chat-store';
+import { $initialized, $session, $chats, $activeChatId, $messages, $isStreaming, $streamingContent, $botError, $searchQuery, $researchProgress } from './chat-store';
 import type { Chat, Message } from '../lib/db';
 import type { UserSession } from '../lib/session';
+import type { ResearchProgressEvent } from '../lib/api/research-tools';
 
 export function initStore(session: UserSession, chats: Chat[], activeChatId: string, messages: Message[]): void {
   $session.set(session); $chats.set(chats); $activeChatId.set(activeChatId); $messages.set(messages); $initialized.set(true);
@@ -37,3 +38,7 @@ export function updateChatInList(chat: Chat): void {
 }
 
 export function removeChatFromList(chatId: string): void { $chats.set($chats.get().filter((c) => c.id !== chatId)); }
+
+export function setResearchProgress(event: ResearchProgressEvent): void { $researchProgress.set(event); }
+
+export function clearResearchProgress(): void { $researchProgress.set(null); }

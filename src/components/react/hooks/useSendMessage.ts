@@ -2,10 +2,12 @@ import { useCallback } from 'react';
 import {
   addUserMessage, updateChatInList, startStreaming,
   updateStreaming, finishStreaming, setBotError, setChats,
+  setResearchProgress, clearResearchProgress,
 } from '../../../stores/chat-actions';
 import { addMessage, getMessagesByChatId, getChat, updateChat, getAllChats } from '../../../lib/db';
 import { streamChat } from '../../../lib/groq-client';
-import { $selectedProvider, $selectedGroqModel } from '../../../stores/chat-store';
+import { $selectedProvider, $selectedGroqModel, $researchMode } from '../../../stores/chat-store';
+import type { ResearchProgressEvent } from '../../../lib/api/research-tools';
 import { detectWidgetFromModelResponse, detectWidgetFromKeywords, uriMap } from '../utils/widget-detector';
 import { buildSpreadsheetContext } from '../utils/build-history-context';
 
@@ -59,11 +61,58 @@ export function useSendMessage(
 
       const provider = $selectedProvider.get();
       const groqModel = $selectedGroqModel.get();
-      for await (const token of streamChat(history, selectedModel, provider, groqModel)) {
-        fullContent += token;
-        if (!rafPending) {
-          rafPending = true;
-          requestAnimationFrame(() => { updateStreaming(fullContent); rafPending = false; });
+      const researchMode = $researchMode.get();
+
+      if (researchMode) {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: history, model: selectedModel, provider, groqModel, research: true }),
+        });
+        if (!response.ok) throw new Error(`API error ${response.status}`);
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No readable stream');
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6);
+            if (raw === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(raw) as Record<string, unknown>;
+              const evtType = typeof parsed.type === 'string' ? parsed.type : '';
+              const isProgressEvent = evtType === 'searching' || evtType === 'reading_url' || evtType === 'synthesizing' || evtType === 'research_plan' || evtType === 'research_done';
+              if (isProgressEvent) {
+                setResearchProgress(parsed as unknown as ResearchProgressEvent);
+              } else {
+                const token = (parsed as { choices?: { delta?: { content?: string } }[] }).choices?.[0]?.delta?.content;
+                if (token) {
+                  fullContent += token;
+                  if (!rafPending) {
+                    rafPending = true;
+                    requestAnimationFrame(() => { updateStreaming(fullContent); rafPending = false; });
+                  }
+                }
+              }
+            } catch {
+              // linea parcial, ignorar
+            }
+          }
+        }
+        clearResearchProgress();
+      } else {
+        for await (const token of streamChat(history, selectedModel, provider, groqModel)) {
+          fullContent += token;
+          if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(() => { updateStreaming(fullContent); rafPending = false; });
+          }
         }
       }
       updateStreaming(fullContent);

@@ -5,6 +5,7 @@ export interface ChatRequestBody {
   model?: string;
   provider?: 'ollama' | 'groq';
   groqModel?: string;
+  research?: boolean;
 }
 
 export async function* streamChat(
@@ -12,11 +13,12 @@ export async function* streamChat(
   model?: string,
   provider?: 'ollama' | 'groq',
   groqModel?: string,
+  research?: boolean,
 ): AsyncGenerator<string, void, unknown> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, model, provider, groqModel } satisfies ChatRequestBody),
+    body: JSON.stringify({ messages, model, provider, groqModel, research } satisfies ChatRequestBody),
   });
 
   if (!response.ok) {

@@ -6,6 +6,7 @@ import { useSendMessage } from './hooks/useSendMessage';
 import { PendingFileChip } from './input/PendingFileChip';
 import { MessageTextarea } from './input/MessageTextarea';
 import { SendButton } from './input/SendButton';
+import { ResearchToggle } from './input/ResearchToggle';
 
 export function ChatInput() {
   const activeChatId = useStore($activeChatId);
@@ -43,6 +44,7 @@ export function ChatInput() {
           disabled={isStreaming} onClick={() => fileInputRef.current?.click()}>
           <span className="material-symbols-outlined" aria-hidden="true">attach_file</span>
         </button>
+        <ResearchToggle />
         <input type="file" ref={fileInputRef} hidden accept=".csv,.xlsx,.xls,.pdf"
           onChange={handleFileChange} />
         <MessageTextarea value={text} onChange={e => setText(e.target.value)}

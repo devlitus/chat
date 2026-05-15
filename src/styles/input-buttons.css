@@ -57,3 +57,13 @@
 .send-btn .material-symbols-outlined {
   font-size: 20px;
 }
+
+.research-toggle--active {
+  color: var(--color-primary);
+  background: rgba(43, 140, 238, 0.12);
+}
+
+.research-toggle--active:hover {
+  color: var(--color-primary);
+  background: rgba(43, 140, 238, 0.2);
+}
