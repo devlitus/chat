@@ -5,6 +5,7 @@ import {
 } from '../../../stores/chat-actions';
 import { addMessage, getMessagesByChatId, getChat, updateChat, getAllChats } from '../../../lib/db';
 import { streamChat } from '../../../lib/groq-client';
+import { $selectedProvider, $selectedGroqModel } from '../../../stores/chat-store';
 import { detectWidgetFromModelResponse, detectWidgetFromKeywords, uriMap } from '../utils/widget-detector';
 import { buildSpreadsheetContext } from '../utils/build-history-context';
 
@@ -56,7 +57,9 @@ export function useSendMessage(
       let fullContent = '';
       let rafPending = false;
 
-      for await (const token of streamChat(history, selectedModel)) {
+      const provider = $selectedProvider.get();
+      const groqModel = $selectedGroqModel.get();
+      for await (const token of streamChat(history, selectedModel, provider, groqModel)) {
         fullContent += token;
         if (!rafPending) {
           rafPending = true;

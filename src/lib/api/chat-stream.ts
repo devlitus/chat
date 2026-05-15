@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk';
 import { SYSTEM_PROMPT } from '../system-prompt';
 import { TOOL_DEFINITIONS, executeTool, type ToolCall } from './tools';
+import { isReasoningModel, DEFAULT_GROQ_MODEL } from '../groq-models';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 type OllamaMessage = { role: 'user' | 'assistant' | 'system' | 'tool'; content: string | null; tool_calls?: ToolCall[]; tool_call_id?: string };
@@ -19,13 +20,19 @@ export async function streamOllama(messages: Message[], requestModel?: string): 
   return response.body;
 }
 
-export async function streamGroq(messages: Message[]): Promise<ReadableStream> {
+const GROQ_MAX_HISTORY = 20;
+
+export async function streamGroq(messages: Message[], requestModel?: string): Promise<ReadableStream> {
   const apiKey = import.meta.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error('GROQ_API_KEY is not configured');
+  if (!apiKey) throw new Error('GROQ_API_KEY no está configurada');
   const groq = new Groq({ apiKey });
+  const truncated = messages.slice(-GROQ_MAX_HISTORY);
+  const modelId = requestModel ?? DEFAULT_GROQ_MODEL;
+  const isReasoning = isReasoningModel(modelId);
   const chatCompletion = await groq.chat.completions.create({
-    messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
-    model: 'openai/gpt-oss-20b', temperature: 1, max_completion_tokens: 8192, top_p: 1, stream: true, reasoning_effort: 'medium', stop: null,
+    messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...truncated],
+    model: modelId, temperature: 1, max_completion_tokens: 4096, top_p: 1, stream: true, stop: null,
+    ...(isReasoning ? { reasoning_effort: 'medium' } : {}),
   });
   return new ReadableStream({
     async start(controller) {
