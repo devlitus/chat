@@ -7,7 +7,12 @@
       "WebFetch(domain:docs.astro.build)",
       "WebFetch(domain:angelika.me)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm:*)"
+      "Bash(pnpm:*)",
+      "WebFetch(domain:apidog.com)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(printf 'feat\\(tools\\): add tool-use support for Ollama with agentic loop\\\\n\\\\nImplements streamOllamaWithTools with a max-5-iteration tool-call loop.\\\\nTools: web_search \\(Tavily\\), get_weather \\(Open-Meteo\\), get_datetime,\\\\ncalculate \\(mathjs\\), get_crypto_prices \\(CoinGecko\\). Model allowlist added\\\\nto chat.ts; error messages unified; system-prompt updated with tool docs.\\\\n\\\\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\\\\n')",
+      "Bash(git commit *)"
     ]
   }
 }

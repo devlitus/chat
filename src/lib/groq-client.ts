@@ -2,15 +2,21 @@
 
 export interface ChatRequestBody {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  model?: string;
+  provider?: 'ollama' | 'groq';
+  groqModel?: string;
 }
 
 export async function* streamChat(
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  model?: string,
+  provider?: 'ollama' | 'groq',
+  groqModel?: string,
 ): AsyncGenerator<string, void, unknown> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages } satisfies ChatRequestBody),
+    body: JSON.stringify({ messages, model, provider, groqModel } satisfies ChatRequestBody),
   });
 
   if (!response.ok) {

@@ -1,0 +1,64 @@
+/* Avatars, Meta & Message Layout */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.user-avatar .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.bot-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(to bottom right, #6366f1, #9333ea);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(147, 51, 234, 0.2);
+  color: #fff;
+  margin-top: 4px;
+}
+
+.bot-avatar .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.msg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.message-user .msg-content {
+  align-items: flex-end;
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.msg-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.msg-time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}

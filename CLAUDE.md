@@ -2,7 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 Always respond in Spanish.
-The operating system I work on is Windows 11.
 
 ## Commands
 
@@ -13,135 +12,93 @@ The operating system I work on is Windows 11.
 - `pnpm test:watch` — Run tests in watch mode during development
 - `pnpm test:ui` — Open interactive test UI in browser
 - `pnpm test:coverage` — Generate coverage report
-
-## Testing
-
-Vitest is configured with happy-dom environment and fake-indexeddb support. 49 unit tests cover critical business logic in:
-- `src/lib/` (session, markdown, db, groq-client)
-- `src/pages/api/` (chat endpoint validation)
-
-Tests are co-located with source files using `*.test.ts` naming convention.
+- `pnpm test -- src/lib/db.test.ts` — Run a single test file
 
 ## Architecture
 
-Astro 5 project with React integration and server-side rendering (SSR mode with Node adapter).
+Astro 5 SSR project (Node adapter) with React islands for interactive UI.
 
-- `src/pages/` — File-based routing (`.astro` files become routes)
-- `src/layouts/` — HTML document wrappers using `<slot />` for content injection
-- `src/components/` — Mix of Astro components (static) and React components (interactive)
-  - `src/components/react/` — React island components (ChatApp with client:load directive)
-  - `src/components/*.astro` — Astro components with scoped `<style>` blocks
-- `src/lib/` — Utility libraries (db.ts, session.ts, markdown.ts, groq-client.ts)
-- `src/assets/` — Images/SVGs imported as modules (use `.src` for the URL)
-- `public/` — Static files served at site root
+- `src/pages/` — File-based routing. Widget pages (`weather-app.astro`, `crypto-app.astro`, etc.) are **standalone pages without a Layout**, loaded as iframes inside chat bubbles.
+- `src/components/react/` — All interactive UI. Entry point is `ChatApp` (mounted via `client:load`).
+- `src/stores/` — Global state via **Nanostores atoms** (`chat-store.ts`). Mutations go through `chat-actions.ts`. No React Context.
+- `src/lib/db/` — IndexedDB layer split into `db-core.ts` (connection), `db-chats.ts`, `db-messages.ts`, `db-types.ts`. Public API re-exported from `src/lib/db.ts`.
+- `src/lib/api/` — Server-side logic: `chat-stream.ts` (Ollama/Groq streaming), `mcp-server.ts` (MCP tool registration).
 
-Uses pnpm, ES modules, and strict TypeScript (`astro/tsconfigs/strict`). Plain CSS with global styles. React for interactive chat UI with Context-based state management.
+### LLM providers
 
-## Modelo LLM
+Controlled by `LLM_PROVIDER` env var (default: `ollama`):
 
-- Proveedor: **Groq** vía `groq-sdk`
-- Modelo actual: `openai/gpt-oss-20b` (modelo de razonamiento)
-- Configurado en `src/pages/api/chat.ts` con `reasoning_effort: 'low'` y `stream: true`
-- Los chunks de razonamiento (`reasoning_content`) se ignoran en el cliente: `groq-client.ts` solo emite `parsed.choices?.[0]?.delta?.content`. El spinner es visible mientras el modelo razona.
+- `ollama` — calls `OLLAMA_BASE_URL/v1/chat/completions`. Model set via `OLLAMA_MODEL` (default: `gemma4`) or overridden per-request.
+- `groq` — uses `groq-sdk` with model `openai/gpt-oss-20b`. Chunks with `reasoning_content` are silently dropped in `groq-client.ts`; the spinner stays visible while the model reasons.
 
-## Sistema MCP (Model Context Protocol)
+See `.env.example` for all env vars.
 
-Integración experimental de MCP dentro del chat para renderizar UIs interactivas en burbujas del asistente.
+### Widget pipeline
 
-### Archivos clave
+When the model response contains a `[WIDGET:type]` marker, the chat renders an interactive iframe instead of markdown:
 
-- `src/pages/api/mcp.ts` — Endpoint POST/OPTIONS del servidor MCP usando `@modelcontextprotocol/sdk`. Registra la herramienta `get-time` con `registerAppTool` de `@modelcontextprotocol/ext-apps/server`. Usa un mock de Express (`reqMock`/`resMock`) para compatibilizar `StreamableHTTPServerTransport` con Astro SSR.
-- `src/pages/mcp-app.astro` — Página standalone (cargada en iframe) que monta `McpClientApp`. Usa Tailwind CDN y fuentes de Google. No tiene layout propio.
-- `src/components/mcp/McpClientApp.tsx` — React component del cliente MCP. Se comunica con el host padre via `window.postMessage` usando el protocolo interno `mcp_call_tool` / `mcp_tool_result`.
+1. `system-prompt.ts` instructs the model to emit `[WIDGET:weather|time|crypto|travel|chart]` as the last line.
+2. `widget-detector.ts` matches the marker and maps it to a `ui://mcp-app-demo/<path>` URI.
+3. `useSendMessage.ts` stores the URI as `uiResourceUri` on the `Message` record in IndexedDB.
+4. `BotMessage.tsx` renders `<WidgetFrame>` instead of HTML when `uiResourceUri` is set.
+5. `WidgetFrame.tsx` loads the standalone Astro page in a sandboxed iframe. `ALLOWED_UI_PATHS` is the security allowlist.
+6. `useMcpTools.ts` bridges data between host and iframe via `postMessage` (`mcp_call_tool` / `mcp_tool_result`).
 
-### Protocolo host ↔ iframe
+### Adding a new widget
 
-| Dirección | `type` | Datos |
-|---|---|---|
-| Iframe → Host | `mcp_call_tool` | `{ toolName: 'get-time' }` |
-| Host → Iframe | `mcp_tool_result` | `{ toolName: 'get-time', time: ISOString }` |
+1. Create `src/pages/<name>-app.astro` (standalone, no layout).
+2. Add the route to `ALLOWED_UI_PATHS` in `WidgetFrame.tsx` and `widgetConfig`.
+3. Add `[WIDGET:<name>]` instruction to `SYSTEM_PROMPT` in `system-prompt.ts`.
+4. Add the URI mapping to `uriMap` in `widget-detector.ts`.
+5. Handle the tool call in `useMcpTools.ts` if the widget needs host data.
 
-El host maneja los mensajes en `MessageBubble.tsx`. Si un mensaje del asistente tiene `uiResourceUri`, se renderiza el iframe en lugar de HTML markdown.
+### File uploads
 
-## Agentes
+`src/pages/api/upload.ts` writes files to a temp store; `src/pages/api/read-temp.ts` reads them back. `build-history-context.ts` injects CSV content into the last user message to trigger the chart widget.
 
-Este proyecto usa seis subagentes especializados con un pipeline secuencial automático:
+## Testing
 
-1. **planner** — Planifica y diseña nuevas features. Analiza el codebase, investiga buenas prácticas y genera documentos de diseño en `docs/`. Siempre ejecutar primero.
-2. **implementer** — Implementa features a partir de los planes del planner. Ejecutar después del planner.
-3. **quality** — Revisa calidad del código (TypeScript, complejidad, convenciones, build, tests). Ejecutar automáticamente después del implementer.
-4. **security** — Audita vulnerabilidades OWASP, secretos expuestos, XSS e inyecciones. Ejecutar automáticamente después del quality.
-5. **accessibility** — Verifica WCAG 2.1, HTML semántico, ARIA y navegación por teclado. Ejecutar automáticamente después del security. Genera el resumen consolidado del pipeline.
-6. **performance-auditor** — Audita rendimiento: React re-renders, IndexedDB, streaming Groq, SSR waterfalls, complejidad algorítmica. Ejecutar bajo demanda cuando los cambios afectan rendering, data fetching, streaming o base de datos.
+Vitest with happy-dom and fake-indexeddb. Tests are co-located (`*.test.ts`). Covers `src/lib/` (session, markdown, db, groq-client) and `src/pages/api/chat.ts` validation.
 
-### Flujo de trabajo automático
+## MCP Server
 
-**IMPORTANTE**: Después de que el `implementer` termine cualquier implementación, ejecuta automáticamente los agentes de QA en este orden:
+`src/lib/api/mcp-server.ts` registers tools with `registerAppTool` from `@modelcontextprotocol/ext-apps/server`. Each tool declares a `_meta.ui.resourceUri` that maps to a widget page. The transport uses a mock Express-like `req/res` to bridge `StreamableHTTPServerTransport` with Astro SSR (no native Express).
+
+## Agentes QA (pipeline automático)
+
+Después de que el `implementer` termine cualquier implementación, ejecuta automáticamente:
 
 ```
 planner → implementer → quality → security → accessibility
 ```
 
-1. Usar el agente **planner** para analizar requisitos y escribir el plan en `docs/`.
-2. Usar el agente **implementer** para implementar el plan.
-3. **Clasificar cambios** (ver tabla de ejecución selectiva abajo).
-4. Usar el agente **quality** para revisar calidad — genera `.claude/reports/quality-report.md`.
-5. Si quality reporta `## Pipeline: HALT` (build fallido), **DETENER el pipeline** y devolver solo el reporte de quality al usuario. No ejecutar security ni accessibility.
-6. Usar el agente **security** (si aplica) — genera `.claude/reports/security-report.md`.
-7. Usar el agente **accessibility** (si aplica) — genera `.claude/reports/accessibility-report.md` y `.claude/reports/pipeline-summary.md`.
-8. Usar el agente **performance-auditor** (si aplica, ver tabla) — genera `.claude/reports/performance-report.md`.
-
 ### Ejecución selectiva
-
-Antes de lanzar los agentes QA, clasifica los archivos modificados y salta agentes irrelevantes:
 
 | Archivos modificados | quality | security | accessibility | performance |
 |---|---|---|---|---|
 | `src/pages/api/`, `src/lib/`, `src/middleware/` | SI | SI | NO | SI |
 | `src/components/`, `src/pages/*.astro`, `src/layouts/` | SI | SI | SI | SI |
-| Solo `.css`, solo estilos en `<style>` | SI | NO | SI | NO |
+| Solo `.css` / `<style>` | SI | NO | SI | NO |
 | Solo `docs/`, `README`, `.md` | NO | NO | NO | NO |
 | `package.json`, config files | SI | SI | NO | NO |
-| Mezcla de archivos | SI | SI | SI | SI |
+| Mezcla | SI | SI | SI | SI |
 
-**quality** siempre se ejecuta (excepto para docs). **performance** se ejecuta solo cuando los cambios tocan rendering, data fetching, streaming o base de datos.
+**performance** solo cuando los cambios tocan rendering, data fetching, streaming o base de datos.
 
 ### Fail-fast
 
-Si el agente **quality** detecta que el build falla (`pnpm build` retorna error), el pipeline se detiene inmediatamente. No tiene sentido auditar seguridad ni accesibilidad de código que no compila. El reporte de quality incluirá `## Pipeline: HALT` como señal.
+Si `quality` detecta build fallido, incluirá `## Pipeline: HALT` y el pipeline se detiene. No ejecutar security ni accessibility.
 
 ### Ciclo de corrección
 
-Cuando el pipeline detecta problemas **críticos** en cualquier reporte:
-1. Presentar el `pipeline-summary.md` al usuario con los hallazgos críticos.
-2. Usar el agente **implementer** para corregir SOLO los problemas marcados como críticos.
-3. Re-ejecutar SOLO los agentes QA que reportaron problemas (no todos).
-4. **Máximo 2 iteraciones** de corrección. Si después de 2 ciclos aún hay críticos, presentar el reporte final al usuario para decisión manual.
+Máximo 2 iteraciones: `implementer → QA → implementer (fixes) → QA → STOP`. Si aún hay críticos tras 2 ciclos, presentar al usuario.
 
-```
-implementer → QA (ciclo 1) → implementer (fixes) → QA (ciclo 2) → STOP
-```
+### Reportes y memoria de agentes
 
-### Sistema de memoria de agentes
+- `.claude/reports/` — reportes de cada agente (`quality-report.md`, `security-report.md`, `accessibility-report.md`, `pipeline-summary.md`, `performance-report.md`)
+- `.claude/memory/` — memoria persistente entre sesiones por agente
 
-Cada agente de QA mantiene memoria persistente entre sesiones para acumular conocimiento del proyecto:
-
-- `.claude/memory/quality-memory.md` — patrones de calidad del proyecto
-- `.claude/memory/security-memory.md` — vulnerabilidades conocidas y superficie de ataque
-- `.claude/memory/accessibility-memory.md` — estado de accesibilidad por componente
-- `.claude/memory/performance-memory.md` — anti-patrones de rendimiento, tamaños de bundle base, componentes problemáticos
-
-### Comunicación entre agentes
-
-Los agentes se comunican via archivos compartidos en `.claude/reports/`:
-- El agente **security** lee el reporte de **quality** para contexto
-- El agente **accessibility** lee ambos reportes anteriores
-- El agente **accessibility** consolida todo en `pipeline-summary.md`
-- El agente **performance-auditor** lee `quality-report.md` para evitar duplicar hallazgos
-
-Si el pipeline-summary reporta problemas críticos, resolver antes del siguiente commit.
-
-### referencias de documentación
+### Referencias
 
 - [GROQ — Quickstart](https://console.groq.com/docs/quickstart)
 - [MCP SDK — TypeScript](https://github.com/modelcontextprotocol/typescript-sdk)

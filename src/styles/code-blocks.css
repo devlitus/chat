@@ -1,0 +1,73 @@
+/* Code Blocks inside Bot Bubbles */
+.bot-bubble pre {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.bot-bubble pre code.hljs {
+  background: #0d1117;
+  border-radius: 0;
+  padding: 16px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+  display: block;
+  overflow-x: auto;
+}
+
+.bot-bubble code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+
+.bot-bubble :not(pre) > code {
+  background: rgba(110, 118, 129, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  color: #e6edf3;
+}
+
+.bot-bubble pre .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #161b22;
+  border-bottom: 1px solid var(--color-border);
+  padding: 6px 12px;
+}
+
+.bot-bubble pre .code-lang {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8b949e;
+  text-transform: lowercase;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.bot-bubble pre .copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.bot-bubble pre .copy-btn:hover {
+  color: #e6edf3;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bot-bubble pre .copy-btn .material-symbols-outlined {
+  font-size: 14px;
+}

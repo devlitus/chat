@@ -1,167 +1,209 @@
-import { useState, useEffect } from 'react';
+import { useChartData } from './chart/useChartData';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid,
 } from 'recharts';
 
-interface ChartData {
-  [key: string]: string | number;
+const styleId = '__chart-widget-keyframes';
+if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `@keyframes chart-spin { to { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
 }
 
+const s = {
+  wrapper: {
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    padding: '12px',
+    background: 'transparent',
+    fontFamily: "'Inter', sans-serif",
+    overflow: 'hidden',
+  } as React.CSSProperties,
+  card: {
+    position: 'relative' as const,
+    width: '100%',
+    maxWidth: '800px',
+    height: '100%',
+    background: '#0b1221',
+    borderRadius: '24px',
+    padding: '3px',
+    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.2)',
+    border: '1px solid rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column' as const,
+  },
+  inner: {
+    background: '#0f1523',
+    borderRadius: '21.6px',
+    padding: '20px',
+    position: 'relative' as const,
+    overflow: 'hidden',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '16px',
+    flexShrink: 0,
+    position: 'relative' as const,
+    zIndex: 10,
+  },
+  iconBox: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)',
+    flexShrink: 0,
+    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+  },
+  iconLarge: { fontSize: '28px' },
+  titleGradient: {
+    fontSize: '20px',
+    fontWeight: 700,
+    lineHeight: 1.25,
+    margin: 0,
+    background: 'linear-gradient(to right, #93c5fd, #c4b5fd)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  } as React.CSSProperties,
+  subtitle: {
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#6b7280',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase' as const,
+    margin: '2px 0 0',
+  },
+  centerContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    position: 'relative' as const,
+    zIndex: 10,
+  },
+  spinner: {
+    color: '#60a5fa',
+    fontSize: '40px',
+    animation: 'chart-spin 1s linear infinite',
+  },
+  loadingText: { color: '#9ca3af', fontSize: '14px', fontWeight: 500, margin: 0 },
+  errorIcon: { color: '#fb7185', fontSize: '40px', marginBottom: '8px' },
+  errorTitle: { color: '#fff', fontSize: '14px', fontWeight: 500, margin: 0 },
+  chartContainer: {
+    flex: 1,
+    position: 'relative' as const,
+    zIndex: 10,
+    marginTop: '8px',
+  },
+  glowBlue: {
+    position: 'absolute' as const,
+    top: 0,
+    right: 0,
+    width: '256px',
+    height: '256px',
+    background: 'rgba(59,130,246,0.05)',
+    borderRadius: '50%',
+    filter: 'blur(64px)',
+    transform: 'translate(33%, -50%)',
+    pointerEvents: 'none' as const,
+  },
+  glowPurple: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    width: '192px',
+    height: '192px',
+    background: 'rgba(139,92,246,0.05)',
+    borderRadius: '50%',
+    filter: 'blur(64px)',
+    transform: 'translate(-33%, 33%)',
+    pointerEvents: 'none' as const,
+  },
+};
+
 export default function ChartApp() {
-  const [data, setData] = useState<ChartData[] | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(true);
+  const { data, errorMsg, loading } = useChartData();
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const msg = event.data;
-      if (msg && msg.type === 'mcp_tool_result' && msg.toolName === 'get-chart-data') {
-        if (msg.error) {
-          setErrorMsg(msg.error);
-        } else if (msg.data && Array.isArray(msg.data)) {
-          setData(msg.data);
-        } else {
-          setErrorMsg('No se encontraron datos en el formato correcto.');
-        }
-        setLoading(false);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    // Solicitar los datos al host
-    window.parent.postMessage(
-      {
-        type: 'mcp_call_tool',
-        toolName: 'get-chart-data',
-      },
-      '*'
-    );
-
-    // Timeout de seguridad
-    const timer = setTimeout(() => {
-      setLoading((prev) => {
-        if (prev) {
-          setErrorMsg('Tiempo de espera agotado solicitando datos.');
-          return false;
-        }
-        return prev;
-      });
-    }, 5000);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      clearTimeout(timer);
-    };
-  }, []);
-
-  // Determinar qué llave usar para X (asumimos "name" o la primera llave string)
-  // y qué llaves numéricas usar para iterar sobre Barras.
   let xAxisKey = 'name';
   const numericKeys: string[] = [];
-
   if (data && data.length > 0) {
     const sample = data[0];
-    const keys = Object.keys(sample);
     let foundX = false;
-    for (const key of keys) {
-      if (!foundX && (key === 'name' || typeof sample[key] === 'string')) {
-        xAxisKey = key;
-        foundX = true;
-      } else if (typeof sample[key] === 'number') {
-        numericKeys.push(key);
-      }
+    for (const key of Object.keys(sample)) {
+      if (!foundX && (key === 'name' || typeof sample[key] === 'string')) { xAxisKey = key; foundX = true; }
+      else if (typeof sample[key] === 'number') numericKeys.push(key);
     }
-    // Fallback if no numeric keys found but 'value' exists
-    if (numericKeys.length === 0 && 'value' in sample) {
-      numericKeys.push('value');
-    }
+    if (numericKeys.length === 0 && 'value' in sample) numericKeys.push('value');
   }
 
   const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
+  const mi = (name: string, style?: React.CSSProperties) => (
+    <span className="material-symbols-rounded" style={style}>{name}</span>
+  );
+
   return (
-    <div className="h-screen flex items-start justify-center p-3 bg-transparent font-sans overflow-hidden">
-      <div className="relative w-full max-w-[800px] h-full bg-[#0b1221] rounded-3xl p-[3px] shadow-xl border border-white/5 overflow-hidden flex flex-col">
-        <div className="bg-[#0f1523] rounded-[1.35rem] p-5 relative overflow-hidden flex-1 flex flex-col">
+    <div style={s.wrapper}>
+      <div style={s.card}>
+        <div style={s.inner}>
           {/* Header */}
-          <div className="flex items-center gap-4 mb-4 shrink-0 relative z-10">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0"
-              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' }}
-            >
-              <span className="material-symbols-rounded text-[28px]">bar_chart</span>
+          <div style={s.header}>
+            <div style={s.iconBox}>
+              {mi('bar_chart', s.iconLarge)}
             </div>
             <div>
-              <h2
-                className="text-xl font-bold leading-tight"
-                style={{
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundImage: 'linear-gradient(to right, #93c5fd, #c4b5fd)',
-                }}
-              >
-                Gráfico Dinámico
-              </h2>
-              <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mt-0.5">
-                Generado a partir de la conversación
-              </p>
+              <h2 style={s.titleGradient}>Gráfico Dinámico</h2>
+              <p style={s.subtitle}>Generado a partir de la conversación</p>
             </div>
           </div>
 
           {/* Loading */}
           {loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 relative z-10">
-              <span className="material-symbols-rounded animate-spin text-blue-400 text-[40px]">
-                autorenew
-              </span>
-              <p className="text-gray-400 text-sm font-medium">Procesando datos...</p>
+            <div style={s.centerContainer}>
+              {mi('autorenew', s.spinner)}
+              <p style={s.loadingText}>Procesando datos...</p>
             </div>
           )}
 
           {/* Error */}
           {!loading && errorMsg && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-2 relative z-10 text-center px-4">
-              <span className="material-symbols-rounded text-rose-400 text-[40px] mb-2">error</span>
-              <p className="text-white text-sm font-medium">{errorMsg}</p>
+            <div style={{ ...s.centerContainer, padding: '0 16px' }}>
+              {mi('error', s.errorIcon)}
+              <p style={s.errorTitle}>{errorMsg}</p>
             </div>
           )}
 
-          {/* Chart Content */}
+          {/* Chart */}
           {!loading && !errorMsg && data && data.length > 0 && (
-            <div className="flex-1 relative z-10 mt-2">
+            <div style={s.chartContainer}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
                   <defs>
                     {colors.map((color, i) => (
-                      <linearGradient key={`grad-${i}`} id={`colorGrad${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient key={`grad-${i}`} id={`chartColorGrad${i}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={color} stopOpacity={0.8} />
                         <stop offset="95%" stopColor={color} stopOpacity={0.2} />
                       </linearGradient>
                     ))}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis
-                    dataKey={xAxisKey}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#94a3b8', fontSize: 12 }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#94a3b8', fontSize: 12 }}
-                    width={60}
-                  />
+                  <XAxis dataKey={xAxisKey} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} width={60} />
                   <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                     contentStyle={{
@@ -174,15 +216,9 @@ export default function ChartApp() {
                     itemStyle={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}
                   />
                   {numericKeys.map((key, i) => (
-                    <Bar
-                      key={key}
-                      dataKey={key}
-                      fill={`url(#colorGrad${i % colors.length})`}
-                      radius={[6, 6, 0, 0]}
-                      barSize={40}
-                    >
+                    <Bar key={key} dataKey={key} fill={`url(#chartColorGrad${i % colors.length})`} radius={[6, 6, 0, 0]} barSize={40}>
                       {data.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={`url(#colorGrad${(index + i) % colors.length})`} />
+                        <Cell key={`cell-${index}`} fill={`url(#chartColorGrad${(index + i) % colors.length})`} />
                       ))}
                     </Bar>
                   ))}
@@ -191,9 +227,9 @@ export default function ChartApp() {
             </div>
           )}
 
-          {/* Background visuals */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none"></div>
+          {/* Decorative */}
+          <div style={s.glowBlue}></div>
+          <div style={s.glowPurple}></div>
         </div>
       </div>
     </div>

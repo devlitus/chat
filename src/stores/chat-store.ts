@@ -13,3 +13,6 @@ export const $isStreaming = atom<boolean>(false);
 export const $streamingContent = atom<string>('');
 export const $botError = atom<string | null>(null);
 export const $searchQuery = atom<string>('');
+export const $selectedModel = atom<string>('');
+export const $selectedProvider = atom<'ollama' | 'groq'>('ollama');
+export const $selectedGroqModel = atom<string>('llama-3.3-70b-versatile');

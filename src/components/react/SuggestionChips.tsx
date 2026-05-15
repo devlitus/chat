@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useStore } from '@nanostores/react';
-import { $activeChatId, $isStreaming } from '../../stores/chat-store';
+import { $activeChatId, $isStreaming, $selectedModel } from '../../stores/chat-store';
 import {
   addUserMessage,
   updateChatInList,
@@ -24,6 +24,7 @@ const suggestions = [
 export function SuggestionChips() {
   const activeChatId = useStore($activeChatId);
   const isStreaming = useStore($isStreaming);
+  const selectedModel = useStore($selectedModel);
 
   const handleClick = useCallback(
     async (text: string) => {
@@ -51,7 +52,7 @@ export function SuggestionChips() {
         let fullContent = '';
         let rafPending = false;
 
-        for await (const token of streamChat(history)) {
+        for await (const token of streamChat(history, selectedModel || undefined)) {
           fullContent += token;
           if (!rafPending) {
             rafPending = true;

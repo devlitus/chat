@@ -1,0 +1,55 @@
+/* Chat Input Area & Textarea */
+.chat-input-area {
+  padding: 16px 24px;
+  background: rgba(16, 25, 34, 0.95);
+  backdrop-filter: blur(4px);
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.15s;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--color-primary);
+}
+
+.chat-input-area textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  resize: none;
+  padding: 12px 0;
+  min-height: 44px;
+  max-height: 160px;
+  outline: none;
+  line-height: 1.5;
+}
+
+.chat-input-area textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.disclaimer {
+  text-align: center;
+  margin: 8px 0 0;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}

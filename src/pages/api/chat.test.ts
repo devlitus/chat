@@ -35,7 +35,7 @@ describe('api/chat.ts - Validación', () => {
       expect(response.status).toBe(400);
 
       const body = await response.json();
-      expect(body.error).toBe('Messages array is required');
+      expect(body.error).toBe('Messages array is required or has invalid format');
     });
 
     it('debe retornar 400 si messages está vacío', async () => {
@@ -64,7 +64,7 @@ describe('api/chat.ts - Validación', () => {
       expect(response.status).toBe(400);
 
       const body = await response.json();
-      expect(body.error).toBe('Invalid message format');
+      expect(body.error).toBe('Messages array is required or has invalid format');
     });
 
     it('debe retornar 400 si falta content', async () => {
