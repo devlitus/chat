@@ -64,3 +64,27 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.research-progress-bubble {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-color: rgba(43, 140, 238, 0.25);
+  background: rgba(43, 140, 238, 0.06);
+  font-size: 14px;
+  font-style: italic;
+  color: #94a3b8;
+  min-width: 200px;
+}
+
+.research-spinner {
+  color: var(--color-primary);
+  font-size: 20px;
+  animation: research-rotate 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes research-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
