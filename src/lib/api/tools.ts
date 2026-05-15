@@ -117,9 +117,17 @@ async function getWeather(args: Record<string, unknown>): Promise<string> {
   ].join('\n');
 }
 
-function getDatetime(): string {
+function getDatetime(args: Record<string, unknown>): string {
+  const requestedTz = String(args.timezone ?? 'UTC');
+  let timezone = 'UTC';
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: requestedTz });
+    timezone = requestedTz;
+  } catch {
+    return `Error: zona horaria "${requestedTz}" no válida. Usa una zona IANA (ej: "America/New_York", "Europe/Madrid", "Asia/Tokyo").`;
+  }
   return new Date().toLocaleString('es-ES', {
-    timeZone: 'Europe/Madrid',
+    timeZone: timezone,
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -130,9 +138,14 @@ function getDatetime(): string {
   });
 }
 
+const CALC_MAX_LENGTH = 200;
+const CALC_BLOCKED = /\b(import|createUnit|typed|parse|compile|evaluate|config|create|factory|addDependencies)\b/;
+
 function calculate(args: Record<string, unknown>): string {
   const expression = String(args.expression ?? '');
   if (!expression) return 'Error: expression es requerido.';
+  if (expression.length > CALC_MAX_LENGTH) return `Error: la expresión supera el límite de ${CALC_MAX_LENGTH} caracteres.`;
+  if (CALC_BLOCKED.test(expression)) return 'Error: la expresión contiene funciones no permitidas.';
 
   try {
     const result = evaluate(expression);
@@ -145,25 +158,49 @@ function calculate(args: Record<string, unknown>): string {
   }
 }
 
-async function getCryptoPrices(): Promise<string> {
+const COIN_ID_MAP: Record<string, string> = {
+  bitcoin: 'bitcoin', btc: 'bitcoin',
+  ethereum: 'ethereum', eth: 'ethereum',
+  solana: 'solana', sol: 'solana',
+  cardano: 'cardano', ada: 'cardano',
+  dogecoin: 'dogecoin', doge: 'dogecoin',
+  polkadot: 'polkadot', dot: 'polkadot',
+  chainlink: 'chainlink', link: 'chainlink',
+  litecoin: 'litecoin', ltc: 'litecoin',
+  avalanche: 'avalanche-2', avax: 'avalanche-2',
+  polygon: 'matic-network', matic: 'matic-network',
+  xrp: 'ripple', ripple: 'ripple',
+};
+
+const COIN_DISPLAY_NAMES: Record<string, string> = {
+  bitcoin: 'Bitcoin (BTC)', ethereum: 'Ethereum (ETH)', solana: 'Solana (SOL)',
+  cardano: 'Cardano (ADA)', dogecoin: 'Dogecoin (DOGE)', polkadot: 'Polkadot (DOT)',
+  chainlink: 'Chainlink (LINK)', litecoin: 'Litecoin (LTC)',
+  'avalanche-2': 'Avalanche (AVAX)', 'matic-network': 'Polygon (MATIC)', ripple: 'XRP (XRP)',
+};
+
+async function getCryptoPrices(args: Record<string, unknown>): Promise<string> {
+  const rawCoins = Array.isArray(args.coins) ? args.coins.map(String) : ['bitcoin', 'ethereum', 'solana'];
+  const ids = [...new Set(rawCoins.map(c => COIN_ID_MAP[c.toLowerCase()] ?? c.toLowerCase()))];
+
+  if (ids.length === 0) return 'Error: no se especificaron monedas válidas.';
+  if (ids.length > 10) return 'Error: máximo 10 monedas por consulta.';
+
   const response = await fetchWithTimeout(
-    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true'
+    `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`
   );
 
-  if (!response.ok) {
-    return `Error al obtener precios de criptomonedas (${response.status}).`;
-  }
+  if (!response.ok) return `Error al obtener precios de criptomonedas (${response.status}).`;
 
   const data = await response.json() as Record<string, { usd?: number; usd_24h_change?: number }>;
-
-  const names: Record<string, string> = { bitcoin: 'Bitcoin (BTC)', ethereum: 'Ethereum (ETH)', solana: 'Solana (SOL)' };
+  if (Object.keys(data).length === 0) return 'No se encontraron datos para las monedas solicitadas.';
 
   return Object.entries(data)
     .map(([id, info]) => {
       const price = info.usd?.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) ?? 'N/A';
       const change = info.usd_24h_change?.toFixed(2) ?? 'N/A';
       const sign = (info.usd_24h_change ?? 0) >= 0 ? '+' : '';
-      return `- ${names[id] ?? id}: ${price} (${sign}${change}% 24h)`;
+      return `- ${COIN_DISPLAY_NAMES[id] ?? id}: ${price} (${sign}${change}% 24h)`;
     })
     .join('\n');
 }
@@ -201,10 +238,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'get_datetime',
-      description: 'Obtiene la fecha y hora actual del servidor (zona horaria Europa/Madrid). Usa esta herramienta cuando el usuario pregunte qué hora es o qué día es hoy.',
+      description: 'Obtiene la fecha y hora actual. Usa esta herramienta cuando el usuario pregunte qué hora es o qué día es hoy. Acepta una zona horaria IANA opcional; si no se especifica usa UTC.',
       parameters: {
         type: 'object',
-        properties: {},
+        properties: {
+          timezone: { type: 'string', description: 'Zona horaria IANA (ej: "America/New_York", "Europe/Madrid", "Asia/Tokyo"). Por defecto UTC.' },
+        },
       },
     },
   },
@@ -226,10 +265,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'get_crypto_prices',
-      description: 'Obtiene los precios actuales de Bitcoin, Ethereum y Solana en USD con el cambio porcentual de las últimas 24 horas desde CoinGecko.',
+      description: 'Obtiene precios actuales de criptomonedas en USD con el cambio porcentual de las últimas 24 horas desde CoinGecko. Por defecto muestra Bitcoin, Ethereum y Solana. Monedas soportadas: bitcoin/btc, ethereum/eth, solana/sol, cardano/ada, dogecoin/doge, polkadot/dot, chainlink/link, litecoin/ltc, avalanche/avax, polygon/matic, xrp/ripple.',
       parameters: {
         type: 'object',
-        properties: {},
+        properties: {
+          coins: { type: 'array', items: { type: 'string' }, description: 'Lista de monedas a consultar (ej: ["bitcoin", "cardano", "eth"]). Máximo 10. Por defecto: ["bitcoin", "ethereum", "solana"].' },
+        },
       },
     },
   },
@@ -266,11 +307,11 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
     case 'get_weather':
       result = await getWeather(args); break;
     case 'get_datetime':
-      result = getDatetime(); break;
+      result = getDatetime(args); break;
     case 'calculate':
       result = calculate(args); break;
     case 'get_crypto_prices':
-      result = await getCryptoPrices(); break;
+      result = await getCryptoPrices(args); break;
     default:
       throw new Error(`Herramienta desconocida: "${name}"`);
   }
