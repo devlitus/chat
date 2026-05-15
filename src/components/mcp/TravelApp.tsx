@@ -487,7 +487,7 @@ export default function TravelApp() {
                   style={{
                     ...s.btnPrimary,
                     ...(!destination.trim() ? s.btnDisabled : {}),
-                    background: !destination.trim() ? 'rgba(30,41,59,0.5)' : undefined,
+                    background: !destination.trim() ? 'rgba(30,41,59,0.5)' : 'linear-gradient(to right, #f43f5e, #fb923c)',
                   }}
                 >
                   {mi('explore', { fontSize: '20px' })}
