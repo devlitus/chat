@@ -69,25 +69,26 @@ Vitest with happy-dom and fake-indexeddb. Tests are co-located (`*.test.ts`). Co
 Después de que el `implementer` termine cualquier implementación, ejecuta automáticamente:
 
 ```
-planner → implementer → quality → security → accessibility
+planner → implementer → quality → security → accessibility → monitor
 ```
 
 ### Ejecución selectiva
 
-| Archivos modificados | quality | security | accessibility | performance |
-|---|---|---|---|---|
-| `src/pages/api/`, `src/lib/`, `src/middleware/` | SI | SI | NO | SI |
-| `src/components/`, `src/pages/*.astro`, `src/layouts/` | SI | SI | SI | SI |
-| Solo `.css` / `<style>` | SI | NO | SI | NO |
-| Solo `docs/`, `README`, `.md` | NO | NO | NO | NO |
-| `package.json`, config files | SI | SI | NO | NO |
-| Mezcla | SI | SI | SI | SI |
+| Archivos modificados | quality | security | accessibility | performance | monitor |
+|---|---|---|---|---|---|
+| `src/pages/api/`, `src/lib/`, `src/middleware/` | SI | SI | NO | SI | SI |
+| `src/components/`, `src/pages/*.astro`, `src/layouts/` | SI | SI | SI | SI | SI |
+| Solo `.css` / `<style>` | SI | NO | SI | NO | SI |
+| Solo `docs/`, `README`, `.md` | NO | NO | NO | NO | NO |
+| `package.json`, config files | SI | SI | NO | NO | SI |
+| Mezcla | SI | SI | SI | SI | SI |
 
 **performance** solo cuando los cambios tocan rendering, data fetching, streaming o base de datos.
+**monitor** siempre corre al final del pipeline cuando al menos un agente QA corrió, incluso si el resultado es PASS.
 
 ### Fail-fast
 
-Si `quality` detecta build fallido, incluirá `## Pipeline: HALT` y el pipeline se detiene. No ejecutar security ni accessibility.
+Si `quality` detecta build fallido, incluirá `## Pipeline: HALT` y el pipeline se detiene. No ejecutar security ni accessibility. Sí ejecutar `monitor` para registrar el fallo en el historial.
 
 ### Ciclo de corrección
 
@@ -97,6 +98,29 @@ Máximo 2 iteraciones: `implementer → QA → implementer (fixes) → QA → ST
 
 - `.claude/reports/` — reportes de cada agente (`quality-report.md`, `security-report.md`, `accessibility-report.md`, `pipeline-summary.md`, `performance-report.md`)
 - `.claude/memory/` — memoria persistente entre sesiones por agente
+- `.claude/metrics/` — histórico de métricas y propuestas del sistema de monitoreo
+
+### Sistema de monitoreo y auto-mejora
+
+El agente `monitor` (modelo haiku) corre al final de cada pipeline y:
+1. Registra métricas del run en `.claude/metrics/runs.json` (máx. 30 runs)
+2. Actualiza el rastreo de patrones recurrentes en `.claude/metrics/patterns.json`
+3. Genera propuestas en `.claude/metrics/tuning-proposals.md` para patrones con confianza ALTA (≥3 runs consecutivos)
+
+**Aplicación de propuestas — al inicio del siguiente pipeline QA:**
+
+Antes de lanzar el agente `quality`, lee `.claude/metrics/tuning-proposals.md`. Si hay propuestas marcadas `[PENDIENTE]` con confianza ALTA:
+
+1. Crea un commit de checkpoint: `git commit --allow-empty -m "chore: checkpoint antes de aplicar ajustes de monitor"`
+2. Para cada propuesta PENDIENTE ALTA: aplica el cambio descrito usando `Edit` en el archivo objetivo (siempre dentro de `.claude/memory/`)
+3. Cambia el estado de la propuesta de `[PENDIENTE]` a `[APLICADA]` en `tuning-proposals.md`
+
+Si no hay propuestas ALTA pendientes, continúa con el pipeline sin interrupciones.
+
+**Seguridad del sistema de monitoreo:**
+- El monitor solo escribe en `.claude/metrics/` (nunca en `.claude/agents/` ni en `src/`)
+- Las propuestas solo pueden modificar archivos en `.claude/memory/` (memorias de agentes, no sus instrucciones)
+- Cualquier cambio aplicado es reversible con `git revert` gracias al commit de checkpoint
 
 ### Referencias
 
