@@ -1,3 +1,235 @@
 {
-  "runs": []
+  "runs": [
+    {
+      "id": "2026-06-07T17:00:55Z",
+      "date": "2026-06-07",
+      "branch": "main",
+      "pipeline_type": "bugfix",
+      "verdict": "PASS",
+      "debugger": {
+        "fixed": "PASS",
+        "root_cause_category": "model-validation-static",
+        "files_modified": 2,
+        "build": "PASS",
+        "tests": "PASS"
+      },
+      "quality": {
+        "build": "PASS",
+        "types_errors": 3,
+        "tests_pass": 49,
+        "tests_fail": 0,
+        "issues_critical": 1,
+        "issues_warnings": 3
+      },
+      "security": {
+        "audit": "FAIL",
+        "vuln_high": 24,
+        "vuln_medium": 41,
+        "vuln_low": 6,
+        "findings_active": 4
+      },
+      "accessibility": {
+        "level_a": "PASS",
+        "level_aa": "PASS",
+        "issues_critical": 0,
+        "issues_important": 0
+      },
+      "fingerprints": [
+        "quality:src/lib/api/chat-stream.ts:ts-type-compatibility",
+        "quality:src/pages/api/chat.ts:groq-models-hardcoded-list",
+        "quality:src/components/react/ChatHeader.tsx:useeffect-missing-deps",
+        "security:package.json:vitest-critical-vulnerability",
+        "security:package.json:dompurify-moderate-vulnerabilities",
+        "security:package.json:vite-hono-rollup-vulnerabilities",
+        "security:src/components/react/messages/BotMessage.tsx:dangerous-innerhtml-dompurify",
+        "security:src/pages/api/chat.ts:error-message-exposure"
+      ]
+    },
+    {
+      "id": "2026-06-07T17:00:55Z",
+      "date": "2026-06-07",
+      "branch": "main",
+      "pipeline_type": "bugfix",
+      "verdict": "PASS",
+      "debugger": {
+        "fixed": "PASS",
+        "root_cause_category": "model-validation-static",
+        "files_modified": 2,
+        "build": "PASS",
+        "tests": "PASS"
+      },
+      "quality": {
+        "build": "PASS",
+        "types_errors": 3,
+        "tests_pass": 49,
+        "tests_fail": 0,
+        "issues_critical": 1,
+        "issues_warnings": 3
+      },
+      "security": {
+        "audit": "FAIL",
+        "vuln_high": 24,
+        "vuln_medium": 41,
+        "vuln_low": 6,
+        "findings_active": 4
+      },
+      "accessibility": {
+        "level_a": "PASS",
+        "level_aa": "PASS",
+        "issues_critical": 0,
+        "issues_important": 0
+      },
+      "fingerprints": [
+        "quality:src/lib/api/chat-stream.ts:ts-type-compatibility",
+        "quality:src/pages/api/chat.ts:groq-models-hardcoded-list",
+        "quality:src/components/react/ChatHeader.tsx:effects-missing-cache",
+        "security:package.json:vitest-critical-vulnerability",
+        "security:package.json:dompurify-moderate-vulnerabilities",
+        "security:package.json:vite-hono-rollup-high-vulnerabilities",
+        "security:src/components/react/messages/BotMessage.tsx:dangerous-innerhtml-dompurify",
+        "security:src/pages/api/chat.ts:error-message-exposure"
+      ]
+    },
+    {
+      "id": "run-20260516-002",
+      "date": "2026-05-16",
+      "type": "bugfix",
+      "feature": "Restaurar fallback detectWidgetFromKeywords en useSendMessage.ts",
+      "description": "Bug: widgets no se renderizaban. Causa: widget-detector.ts eliminado en migración a tool calling sin migrar el fallback por keywords. Fix: detectWidgetFromKeywords() restaurado inline en useSendMessage.ts como fallback.",
+      "filesModified": [
+        "src/components/react/hooks/useSendMessage.ts"
+      ],
+      "filesDeleted": [],
+      "agents": {
+        "debugger": {
+          "status": "RESOLVED",
+          "rootCause": "Migración incompleta: se eliminó widget-detector.ts pero no se migró detectWidgetFromKeywords como fallback al tool calling",
+          "secondaryBug": "Parallel tool calls (show_widget + get_weather) hace return tras show_widget sin ejecutar el resto — bug UX secundario no corregido"
+        },
+        "quality": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "3 errores TS preexistentes en chat-stream.ts (no introducidos por fix). 3 advertencias: keywords duplicadas, función sin exportar, errores TS sin resolver."
+        },
+        "security": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "M-NEW-01 cerrado. 65 vuln de dependencias preexistentes. hono HIGH nueva (GHSA-q5qw-h33p-qvwr). 2 medios activos en código (M-NEW-02, M-NEW-03)."
+        },
+        "accessibility": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "Sin hallazgos nuevos. 5 conformidades WCAG 2.1 AA verificadas."
+        }
+      },
+      "corrections": 0,
+      "tests": {
+        "total": 49,
+        "pass": 49,
+        "fail": 0
+      },
+      "build": "PASS",
+      "cyclesNeeded": 0,
+      "notes": "Fix mínimo y correcto. Sin ciclos de corrección adicionales. Bug secundario de parallel tool calls documentado para futuro."
+    },
+    {
+      "id": "run-20260516-001",
+      "date": "2026-05-16",
+      "feature": "Widget detection via tool calling",
+      "description": "Reemplaza detección por regex ([WIDGET:x]) por tool calling estructurado (show_widget({type}))",
+      "filesModified": [
+        "src/lib/api/tools.ts",
+        "src/lib/api/chat-stream.ts",
+        "src/pages/api/chat.ts",
+        "src/lib/system-prompt.ts",
+        "src/lib/groq-client.ts",
+        "src/components/react/hooks/useSendMessage.ts",
+        "src/pages/api/chat.test.ts"
+      ],
+      "filesDeleted": [
+        "src/components/react/utils/widget-detector.ts"
+      ],
+      "agents": {
+        "quality": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "2 críticos TypeScript en ciclo 1 (tipos GroqMessage + double cast) ⇒ corregidos"
+        },
+        "security": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "3 medios (URI sin validar, JSON.parse sin schema, error.message). M-NEW-01 corregido, M-NEW-02 y M-NEW-03 aceptados por riesgo bajo"
+        },
+        "accessibility": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "Sin hallazgos nuevos"
+        },
+        "performance": {
+          "status": "PASS",
+          "critical": 0,
+          "issues": "1 crítico (streamGroqWithTools sin timeout) ⇒ corregido. 3 importantes: forcedWidgetChart (corregido), doble parse y buildSpreadsheetContext (aceptados)"
+        }
+      },
+      "corrections": 2,
+      "tests": {
+        "total": 49,
+        "pass": 49,
+        "fail": 0
+      },
+      "build": "PASS",
+      "cyclesNeeded": 1,
+      "notes": "2 ciclos de corrección: ciclo 1 fix TypeScript y performance timeout, ciclo 2 build + tests finales (all PASS)"
+    },
+    {
+      "id": "2026-06-07T17:51:30Z",
+      "date": "2026-06-07",
+      "branch": "fix/image-processing-bug",
+      "pipeline_type": "bugfix",
+      "verdict": "NEEDS_FIX",
+      "debugger": {
+        "fixed": "PASS",
+        "root_cause_category": "multimodal-serialization",
+        "files_modified": 7,
+        "build": "PASS",
+        "tests": "PASS"
+      },
+      "quality": {
+        "build": "PASS",
+        "types_errors": 0,
+        "tests_pass": 49,
+        "tests_fail": 0,
+        "issues_critical": 2,
+        "issues_warnings": 4
+      },
+      "security": {
+        "audit": "FAIL",
+        "vuln_high": 22,
+        "vuln_medium": 41,
+        "vuln_low": 6,
+        "findings_active": 4
+      },
+      "accessibility": {
+        "level_a": "PARCIAL",
+        "level_aa": "PARCIAL",
+        "issues_critical": 3,
+        "issues_important": 3
+      },
+      "fingerprints": [
+        "quality:src/components/react/hooks/useSendMessage.ts:non-null-assertions-narrowing",
+        "quality:src/components/react/utils/build-history-context.ts:array-includes-on-multimodal",
+        "quality:src/components/react/hooks/useFileUpload.ts:pending-file-duplicate-type",
+        "quality:src/pages/api/chat.test.ts:missing-multimodal-content-tests",
+        "quality:src/components/react/hooks/useSendMessage.ts:chart-keywords-divergence",
+        "quality:src/lib/groq-client.ts:sse-parser-missing-buffer",
+        "security:src/components/react/hooks/useFileUpload.ts:dos-no-size-limit-base64",
+        "security:src/pages/api/chat.ts:dos-no-body-limit",
+        "security:src/components/react/hooks/useFileUpload.ts:mime-type-browser-only-no-magic",
+        "security:src/lib/api/chat-stream.ts:image-url-missing-url-field-validation",
+        "accessibility:src/components/react/MessageArea.tsx:error-bubble-no-alert-role",
+        "accessibility:src/components/react/input/MessageTextarea.tsx:inconsistent-language-english",
+        "accessibility:src/components/react/ChatHeader.tsx:aria-pressed-hardcoded-false"
+      ]
+    }
+  ]
 }

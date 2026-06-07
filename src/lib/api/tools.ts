@@ -205,6 +205,14 @@ async function getCryptoPrices(args: Record<string, unknown>): Promise<string> {
     .join('\n');
 }
 
+export const WIDGET_URI_MAP: Record<string, string> = {
+  weather: 'ui://mcp-app-demo/weather-app',
+  time:    'ui://mcp-app-demo/mcp-app',
+  crypto:  'ui://mcp-app-demo/crypto-app',
+  travel:  'ui://mcp-app-demo/travel-app',
+  chart:   'ui://mcp-app-demo/chart-app',
+};
+
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     type: 'function',
@@ -264,6 +272,24 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     type: 'function',
     function: {
+      name: 'show_widget',
+      description: 'Muestra un widget interactivo con datos en tiempo real. Llama a esta herramienta cuando el usuario pida: clima/temperatura/lluvia/pronóstico (weather), hora actual (time), precios de criptomonedas (crypto), viajes/vuelos/hoteles (travel), o gráficos/diagramas de datos (chart).',
+      parameters: {
+        type: 'object',
+        properties: {
+          type: {
+            type: 'string',
+            enum: ['weather', 'time', 'crypto', 'travel', 'chart'],
+            description: 'Tipo de widget a mostrar.',
+          },
+        },
+        required: ['type'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'get_crypto_prices',
       description: 'Obtiene precios actuales de criptomonedas en USD con el cambio porcentual de las últimas 24 horas desde CoinGecko. Por defecto muestra Bitcoin, Ethereum y Solana. Monedas soportadas: bitcoin/btc, ethereum/eth, solana/sol, cardano/ada, dogecoin/doge, polkadot/dot, chainlink/link, litecoin/ltc, avalanche/avax, polygon/matic, xrp/ripple.',
       parameters: {
@@ -312,6 +338,8 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
       result = calculate(args); break;
     case 'get_crypto_prices':
       result = await getCryptoPrices(args); break;
+    case 'show_widget':
+      throw new Error('show_widget debe ser interceptado antes de executeTool');
     default:
       throw new Error(`Herramienta desconocida: "${name}"`);
   }

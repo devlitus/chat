@@ -5,6 +5,8 @@ interface PendingFile {
   id: string;
   name: string;
   type: string;
+  base64?: string;
+  mimeType?: string;
 }
 
 export function useFileUpload(
@@ -22,9 +24,16 @@ export function useFileUpload(
       const lowerName = file.name.toLowerCase();
       const isSpreadsheet = lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls');
       const isPdf = lowerName.endsWith('.pdf');
+      const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
 
-      if (!isSpreadsheet && !isPdf) {
-        setBotError('Tipo de archivo no admitido. Solo CSV, Excel y PDF.');
+      if (!isSpreadsheet && !isPdf && !isImage) {
+        setBotError('Tipo de archivo no admitido. Solo CSV, Excel, PDF e imágenes.');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setBotError('El archivo supera el límite de 5 MB.');
         return;
       }
 
@@ -35,6 +44,17 @@ export function useFileUpload(
       });
       reader.readAsDataURL(file);
       const base64Content = await base64Promise;
+
+      if (isImage) {
+        setPendingFile({
+          id: '',
+          name: file.name,
+          type: 'Imagen',
+          base64: base64Content,
+          mimeType: file.type,
+        });
+        return;
+      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',

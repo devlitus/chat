@@ -8,14 +8,45 @@ import { addMessage, getMessagesByChatId, getChat, updateChat, getAllChats } fro
 import { streamChat } from '../../../lib/groq-client';
 import { $selectedProvider, $selectedGroqModel, $researchMode } from '../../../stores/chat-store';
 import type { ResearchProgressEvent } from '../../../lib/api/research-tools';
-import { detectWidgetFromModelResponse, detectWidgetFromKeywords, uriMap } from '../utils/widget-detector';
 import { buildSpreadsheetContext } from '../utils/build-history-context';
+import { WIDGET_URI_MAP } from '../../../lib/api/tools';
+import type { MessageContent } from '../../../lib/api/chat-stream';
+
+const ALLOWED_WIDGET_URIS = new Set(Object.values(WIDGET_URI_MAP));
+
+const CHART_URI = 'ui://mcp-app-demo/chart-app';
+
+function detectWidgetFromKeywords(userMessage: string): string | undefined {
+  const lower = userMessage.toLowerCase();
+  const isWeather = lower.includes('clima') || lower.includes('tiempo') ||
+    lower.includes('lluv') || lower.includes('temperatura') ||
+    lower.includes('weather') || lower.includes('pronóstico') ||
+    lower.includes('pronostico') || lower.includes('rain') || lower.includes('forecast');
+  const isTime = lower.includes('hora') || lower.includes('time') || lower === '/mcp';
+  const isCrypto = lower.includes('crypto') || lower.includes('bitcoin') ||
+    lower.includes('btc') || lower.includes('ethereum') ||
+    lower.includes('eth') || lower.includes('solana') ||
+    lower.includes('sol') || lower.includes('criptomoneda') ||
+    (lower.includes('precio') && (lower.includes('moneda') || lower.includes('coin')));
+  const isTravel = lower.includes('viaje') || lower.includes('vuelo') ||
+    lower.includes('hotel') || lower.includes('destino') ||
+    lower.includes('turismo') || lower.includes('vacaciones') || lower.includes('viajar');
+  const isChart = lower.includes('gráfico') || lower.includes('grafico') ||
+    lower.includes('gráfica') || lower.includes('grafica') ||
+    lower.includes('diagrama') || lower.includes('compara') || lower.includes('visualiza');
+  if (isWeather) return WIDGET_URI_MAP['weather'];
+  if (isTime) return WIDGET_URI_MAP['time'];
+  if (isCrypto) return WIDGET_URI_MAP['crypto'];
+  if (isTravel) return WIDGET_URI_MAP['travel'];
+  if (isChart) return WIDGET_URI_MAP['chart'];
+  return undefined;
+}
 
 export function useSendMessage(
   activeChatId: string | null,
   selectedModel: string | undefined,
   text: string,
-  pendingFile: { id: string; name: string; type: string } | null,
+  pendingFile: { id: string; name: string; type: string; base64?: string; mimeType?: string } | null,
   isStreaming: boolean,
   onSendComplete: () => void
 ) {
@@ -23,25 +54,43 @@ export function useSendMessage(
     let trimmed = text.trim();
     if ((!trimmed && !pendingFile) || !activeChatId || isStreaming) return;
 
-    if (pendingFile) {
+    const isImage = pendingFile !== null &&
+      pendingFile.type === 'Imagen' &&
+      pendingFile.base64 !== undefined &&
+      pendingFile.mimeType !== undefined;
+
+    if (pendingFile && !isImage) {
       trimmed = `[Archivo subido a temp id: ${pendingFile.id}]: ${pendingFile.name} (${pendingFile.type})\n\n` + trimmed;
     }
 
     onSendComplete();
 
     try {
-      const userMessage = await addMessage(activeChatId, 'user', trimmed);
+      const userMessage = await addMessage(
+        activeChatId,
+        'user',
+        isImage ? `[Imagen: ${pendingFile.name}]\n\n${trimmed}` : trimmed
+      );
       addUserMessage(userMessage);
 
       const chat = await getChat(activeChatId);
       if (chat && chat.messageCount <= 1) {
-        const title = trimmed.length > 50 ? trimmed.substring(0, 50) + '...' : trimmed;
+        const displayTitle = trimmed || pendingFile?.name || 'Imagen';
+        const title = displayTitle.length > 50 ? displayTitle.substring(0, 50) + '...' : displayTitle;
         const updated = await updateChat(activeChatId, { title });
         updateChatInList(updated);
       }
 
       const allMessages = await getMessagesByChatId(activeChatId);
-      const history = allMessages.map(m => ({ role: m.role, content: m.content }));
+      const history: { role: 'user' | 'assistant'; content: MessageContent }[] = allMessages.map(m => ({ role: m.role, content: m.content }));
+
+      if (isImage && history.length > 0) {
+        const lastMsg = history[history.length - 1];
+        const imagePart = { type: 'image_url' as const, image_url: { url: `data:${pendingFile.mimeType};base64,${pendingFile.base64}` } };
+        lastMsg.content = trimmed
+          ? [{ type: 'text' as const, text: trimmed }, imagePart]
+          : [imagePart];
+      }
 
       const lowerMsg = trimmed.toLowerCase();
       const isChartTopic = lowerMsg.includes('gráfico') || lowerMsg.includes('grafico') ||
@@ -58,6 +107,7 @@ export function useSendMessage(
 
       let fullContent = '';
       let rafPending = false;
+      let detectedWidgetUri: string | undefined;
 
       const provider = $selectedProvider.get();
       const groqModel = $selectedGroqModel.get();
@@ -107,24 +157,29 @@ export function useSendMessage(
         }
         clearResearchProgress();
       } else {
-        for await (const token of streamChat(history, selectedModel, provider, groqModel)) {
-          fullContent += token;
-          if (!rafPending) {
-            rafPending = true;
-            requestAnimationFrame(() => { updateStreaming(fullContent); rafPending = false; });
+        for await (const event of streamChat(history, selectedModel, provider, groqModel)) {
+          if (event.type === 'widget') {
+            detectedWidgetUri = event.uri;
+          } else {
+            fullContent += event.content;
+            if (!rafPending) {
+              rafPending = true;
+              requestAnimationFrame(() => { updateStreaming(fullContent); rafPending = false; });
+            }
           }
         }
       }
       updateStreaming(fullContent);
 
-      let uiResourceUri = detectWidgetFromModelResponse(fullContent);
-      if (!uiResourceUri && /widget/i.test(fullContent)) {
-        uiResourceUri = detectWidgetFromKeywords(trimmed);
-      }
-      if (forcedWidgetChart) uiResourceUri = uriMap.chart;
+      if (!detectedWidgetUri) detectedWidgetUri = detectWidgetFromKeywords(trimmed);
+      if (forcedWidgetChart && !detectedWidgetUri) detectedWidgetUri = CHART_URI;
 
-      const cleanContent = fullContent.replace(/\[WIDGET:(weather|time|crypto|travel|chart)\]/i, '').trimEnd();
-      const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, uiResourceUri);
+      const safeUri = detectedWidgetUri && ALLOWED_WIDGET_URIS.has(detectedWidgetUri)
+        ? detectedWidgetUri
+        : undefined;
+
+      const cleanContent = fullContent.trimEnd();
+      const botMessage = await addMessage(activeChatId, 'assistant', cleanContent, safeUri);
       finishStreaming(botMessage);
 
       const chats = await getAllChats();

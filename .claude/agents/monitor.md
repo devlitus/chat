@@ -37,6 +37,13 @@ Lee `.claude/metrics/patterns.json`. Si está vacío o no existe el array `patte
 
 ### Paso 3 — Extrae métricas del run actual
 
+**debugger** (`.claude/reports/debugger-report.md`, solo si existe):
+- `fixed`: PASS / FAIL (busca `## Verificación` y si build+tests son PASS → PASS, cualquier FAIL → FAIL)
+- `root_cause_category`: palabra clave del tipo de bug (null-check, async-timing, type-mismatch, import-error, api-contract, etc.) — infiere del texto de `## Causa raíz`
+- `files_modified`: cuenta de archivos en `## Archivos afectados`
+- `build`: PASS / FAIL de la línea `- Build:` en `## Verificación`
+- `tests`: PASS / FAIL de la línea `- Tests:` en `## Verificación`
+
 **quality** (`.claude/reports/quality-report.md`):
 - `build`: PASS / FAIL (busca línea `## Build de Produccion`)
 - `types_errors`: número tras `[PASS/FAIL] — N errores`
@@ -72,6 +79,10 @@ Ejemplos válidos:
 - `quality:src/components/react/MessageArea.tsx:chunk-size-1mb`
 - `accessibility:src/components/react/ChatInput.tsx:input-sin-label-accesible`
 - `quality:global:messagearea-dynamic-import-pendiente`
+- `debugger:src/lib/groq-client.ts:async-timing-race`
+- `debugger:global:null-check-recurrente`
+
+**Para el debugger**: genera un fingerprint solo si `fixed: FAIL` (bug no resuelto) o si `root_cause_category` aparece por segunda vez o más en el historial de runs. Un bug resuelto (PASS) no necesita fingerprint.
 
 Si el issue no tiene archivo específico, usa `global`.
 
@@ -123,7 +134,15 @@ Schema exacto:
   "id": "2026-05-16T10:00:00Z",
   "date": "2026-05-16",
   "branch": "feature/agent",
+  "pipeline_type": "feature|bugfix",
   "verdict": "PASS",
+  "debugger": {
+    "fixed": "PASS",
+    "root_cause_category": "null-check",
+    "files_modified": 1,
+    "build": "PASS",
+    "tests": "PASS"
+  },
   "quality": {
     "build": "PASS",
     "types_errors": 0,
@@ -151,6 +170,8 @@ Schema exacto:
 }
 ```
 
+`pipeline_type`: `"bugfix"` si existe `debugger-report.md`, `"feature"` en caso contrario.
+
 Usa `null` para cualquier métrica de un agente que no corrió o cuyo reporte no existe.
 
 ### Paso 7 — Escribe los archivos de métricas
@@ -170,6 +191,7 @@ Filtra patrones con `confidence: "ALTA"` Y `status: "activo"`.
 Para cada uno de esos patrones:
 
 1. Lee la memoria del agente correspondiente:
+   - `debugger` → `.claude/memory/debugger-memory.md`
    - `quality` → `.claude/memory/quality-memory.md`
    - `security` → `.claude/memory/security-memory.md`
    - `accessibility` → `.claude/memory/accessibility-memory.md`

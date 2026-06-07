@@ -31,7 +31,7 @@ function ErrorBubble({ error }: { error: string }) {
       <div className="avatar bot-avatar"><span className="material-symbols-outlined">smart_toy</span></div>
       <div className="msg-content">
         <div className="meta"><span className="msg-name">Chat AI</span></div>
-        <div className="bubble bot-bubble error-bubble">
+        <div className="bubble bot-bubble error-bubble" role="alert">
           <p><span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '18px', verticalAlign: 'middle', marginRight: '4px' }}>error</span>{error}</p>
         </div>
       </div>

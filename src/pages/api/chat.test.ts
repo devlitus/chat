@@ -10,10 +10,7 @@ vi.mock('groq-sdk', () => {
       chat = {
         completions: {
           create: vi.fn().mockResolvedValue({
-            async *[Symbol.asyncIterator]() {
-              yield { choices: [{ delta: { content: 'Hola' } }] };
-              yield { choices: [{ delta: { content: ' mundo' } }] };
-            },
+            choices: [{ finish_reason: 'stop', message: { content: 'Hola mundo', tool_calls: null } }],
           }),
         },
       };

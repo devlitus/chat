@@ -40,23 +40,23 @@ export function ChatInput() {
         <PendingFileChip file={pendingFile} onRemove={clearPendingFile} />
       )}
       <div className="input-wrapper">
-        <button className="icon-btn" title="Attach file" aria-label="Attach file"
+        <button className="icon-btn" title="Adjuntar archivo" aria-label="Adjuntar archivo"
           disabled={isStreaming} onClick={() => fileInputRef.current?.click()}>
           <span className="material-symbols-outlined" aria-hidden="true">attach_file</span>
         </button>
         <ResearchToggle />
-        <input type="file" ref={fileInputRef} hidden accept=".csv,.xlsx,.xls,.pdf"
+        <input type="file" ref={fileInputRef} hidden accept=".csv,.xlsx,.xls,.pdf,image/*"
           onChange={handleFileChange} />
         <MessageTextarea value={text} onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown} />
         <div className="right-buttons">
-          <button className="icon-btn" title="Use Microphone" aria-label="Use Microphone">
+          <button className="icon-btn" title="Usar micrófono" aria-label="Usar micrófono">
             <span className="material-symbols-outlined" aria-hidden="true">mic</span>
           </button>
           <SendButton onClick={sendMessage} disabled={isStreaming || !text.trim()} />
         </div>
       </div>
-      <p className="disclaimer">AI can make mistakes. Please review generated code.</p>
+      <p className="disclaimer">La IA puede cometer errores. Revisa el código generado.</p>
     </div>
   );
 }
