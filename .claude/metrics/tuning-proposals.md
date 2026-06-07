@@ -7,7 +7,7 @@
 
 ## Propuestas Pendientes (ALTA confianza)
 
-## [PENDIENTE] quality-memory.md — resolver tipos GroqMessage SDK
+## [APLICADA] quality-memory.md — resolver tipos GroqMessage SDK
 **Fingerprint**: `quality:src/lib/api/chat-stream.ts:ts-type-compatibility`
 **Confianza**: ALTA (5 runs consecutivos desde 2026-05-16)
 **Archivo objetivo**: `.claude/memory/quality-memory.md`
@@ -15,7 +15,7 @@
 **Acción**: ACTUALIZAR
 **Descripción**: Los errores TS2769/TS2339/TS7006 en chat-stream.ts persisten 5 ciclos sin resolución. Aunque el fix multimodal de 2026-06-07 resolvió el tipo content para ChatRequestBody, la incompatibilidad fundamental entre GroqMessage[] local y ChatCompletionMessageParam[] del SDK persiste. Actualizar la memoria con enfoque: crear wrapper de tipos seguro o discriminadores por `role` para que GroqMessage sea compatible con tipos del SDK groq-sdk. Proponer: crear `src/lib/types/groq-adapter.ts` con funciones type-safe de conversión.
 ---
-## [PENDIENTE] quality-memory.md — documenta estabilidad BUILD+TESTS
+## [APLICADA] quality-memory.md — documenta estabilidad BUILD+TESTS
 **Fingerprint**: `quality:global:build-tests-stability`
 **Confianza**: ALTA (4 runs consecutivos desde 2026-05-16)
 **Archivo objetivo**: `.claude/memory/quality-memory.md`
@@ -25,20 +25,6 @@
 ---
 
 ## Propuestas Pendientes (BAJA/MEDIA confianza)
-
-### [PENDIENTE] pattern-001: Resolver errores TS preexistentes en chat-stream.ts (confianza MEDIA)
-
-**Ocurrencias**: 2 runs consecutivos (run-001, run-002)
-**Archivos afectados**: `src/lib/api/chat-stream.ts` líneas 205, 222, 227
-
-**Acción**: Añadir a `debugger-memory.md` nota sobre los 3 errores TS activos:
-- `TS2769` — GroqMessage[] no asignable a ChatCompletionMessageParam[] (requiere wrapper type o type guard por `role`)
-- `TS2339` — Property `choices` inexistente en Stream<ChatCompletionChunk>
-- `TS7006` — Parámetro `tc` implícitamente `any`
-
-Estos errores no bloquean el build pero acumulan deuda. Si aparecen en un tercer run se promoverá a ALTA.
-
----
 
 ### [PENDIENTE] pattern-002: Timeout en streaming async (confianza MEDIA)
 
@@ -66,7 +52,8 @@ Estos errores no bloquean el build pero acumulan deuda. Si aparecen en un tercer
 
 ## Propuestas Aplicadas
 
-*Ninguna aplicada todavía.*
+- **quality-memory.md — resolver tipos GroqMessage SDK** — Aplicada 2026-06-07. Documentado patrón groq-adapter.ts y resolución de TS2769/TS2339/TS7006.
+- **quality-memory.md — documenta estabilidad BUILD+TESTS** — Aplicada 2026-06-07. Baseline de robustez: 4 runs consecutivos 49/49 tests PASS.
 
 ---
 

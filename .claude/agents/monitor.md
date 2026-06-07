@@ -211,10 +211,12 @@ Para cada uno de esos patrones:
 ---
 ```
 
-Lee `.claude/metrics/tuning-proposals.md` actual. Escribe la versión actualizada:
+Lee `.claude/metrics/tuning-proposals.md` actual. Antes de escribir la versión actualizada, **elimina automáticamente** cualquier propuesta `[PENDIENTE]` cuyo fingerprint tenga `status: "resuelto"` en `patterns.json`. No muevas esas propuestas a ninguna sección — simplemente bórralas. Los patrones resueltos no necesitan propuestas pendientes.
+
+Escribe la versión actualizada:
 - Header con fecha actualizada
 - Propuestas [APLICADA] existentes (sin tocarlas)
-- Propuestas [PENDIENTE] existentes (actualizando counters si aplica)
+- Propuestas [PENDIENTE] existentes que siguen activas (actualizando counters si aplica)
 - Propuestas [PENDIENTE] nuevas al final
 
 Máximo 20 propuestas en total. Si se supera, omite las de menor consecutive_runs.
