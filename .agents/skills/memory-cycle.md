@@ -1,53 +1,42 @@
 # Skill: Memory Cycle — Protocolo de Memoria en 3 Capas
 
-**Objetivo**: Proveer un protocolo determinista de lectura/escritura para el sistema de memoria de corto, medio y largo plazo. Todos los agentes deben usar este skill para interactuar con la memoria.
+**Objetivo**: Proveer un protocolo determinista de lectura/escritura para el sistema de memoria de corto, medio y largo plazo. El ciclo de vida (init/promote/cleanup) está automatizado por un plugin de OpenCode. Los agentes solo necesitan **registrar** (`log`).
+
+---
+
+## 🔌 Plugin automático (NO depende del agente)
+
+El plugin `.opencode/plugins/memory-cycle.ts` se ejecuta en el **runtime de OpenCode**, fuera del control del LLM. Garantiza que el ciclo de memoria sea 100% determinista:
+
+| Evento OpenCode | Acción del plugin |
+|-----------------|-------------------|
+| `session.created` | **INIT**: si `session.md` > 24h → promueve entradas a `inbox.md` o `long-term/` → limpia `session.md` |
+| `session.idle` | **PROMOTE + CLEANUP**: promueve lo que quede + elimina entradas > 14 días de `inbox.md` |
+| `session.compacting` | **INYECTA**: copia el contenido de `session.md` al contexto de compactación para que sobreviva |
+
+**El agente NUNCA necesita ejecutar `init`, `promote` ni `cleanup`.** Solo tiene que registrar.
 
 ---
 
 ## Las 3 capas
 
-| Capa | Archivo | Ciclo de vida | Contiene |
-|------|---------|---------------|----------|
-| Corto plazo | `session.md` | 24 horas | Tarea actual, decisiones del día |
-| Medio plazo | `inbox.md` | 1-2 semanas | Features sin terminar, bugs, revisiones |
-| Largo plazo | `long-term/*.md` | Todo el proyecto | Reglas, lecciones, patrones confirmados |
+| Capa | Archivo | Ciclo de vida | Gestionado por |
+|------|---------|---------------|----------------|
+| Corto plazo | `session.md` | 24 horas | Plugin (init/clean) + Agentes (log) |
+| Medio plazo | `inbox.md` | 1-2 semanas | Plugin (promote/cleanup) |
+| Largo plazo | `long-term/*.md` | Todo el proyecto | Plugin (promote) + Agentes (lectura) |
 
 ---
 
-## Protocolo: Inicio de Sesión (`init`)
-
-**Quién**: Nexus, al inicio de cada sesión.
-**Qué hace**:
-
-1. Leer `.agents/memory/session.md`
-2. Si el archivo no existe, crearlo con el template vacío.
-3. Si el `**Timestamp inicio**` tiene más de 24 horas, vaciar el `## Registro de sesión` y actualizar el timestamp.
-4. Leer `.agents/memory/inbox.md` para conocer tareas pendientes.
-5. Leer `.agents/memory/long-term/` para cargar reglas permanentes.
-
-**Formato de session.md tras init**:
-```markdown
-# Memoria de Corto Plazo — Sesión Actual
-...
-## Estado actual
-
-**Rama**: feature/nombre-rama
-**Feature en progreso**: descripción breve
-**Último agente activo**: @nexus
-**Timestamp inicio**: 2026-08-01 19:00
-
-## Registro de sesión
-
-```
-
----
-
-## Protocolo: Registro durante la sesión (`log`)
+## Lo ÚNICO que debe hacer el agente: `log`
 
 **Quién**: Cualquier agente (Leo, Cloe, Max, Félix, Ada, Cipher, Nexus).
 **Cuándo**: Al tomar una decisión, encontrar un error, o terminar una acción relevante.
+**Cómo**: Escribir directamente en `.agents/memory/session.md` siguiendo el formato determinista.
 
-**Formato determinista** — cada entrada DEBE seguir esta estructura exacta:
+### Formato determinista
+
+Cada entrada DEBE seguir esta estructura exacta (el plugin la parsea para promover):
 
 ```markdown
 ## [YYYY-MM-DD HH:MM] @agente | tipo
@@ -59,7 +48,8 @@
 **Archivos**: lista de archivos afectados
 ```
 
-**Tipos válidos**:
+### Tipos válidos
+
 | Tipo | Cuándo usarlo |
 |------|--------------|
 | `decisión` | Se tomó una decisión de diseño o arquitectura |
@@ -69,7 +59,8 @@
 | `bloqueo` | La tarea está bloqueada por algo externo |
 | `descubrimiento` | Se descubrió algo relevante (patrón, limitación) |
 
-**Ejemplo**:
+### Ejemplo
+
 ```markdown
 ## [2026-08-01 19:30] @leo | decisión
 
@@ -82,77 +73,79 @@
 
 ---
 
-## Protocolo: Cierre de Sesión (`promote`)
+## Cómo funciona la promoción automática
 
-**Quién**: Nexus, al finalizar una sesión o feature.
-**Qué hace**:
+El plugin clasifica cada entrada de `session.md` al expirar (>24h):
 
-1. Leer todas las entradas en `session.md > ## Registro de sesión`.
-2. Clasificar cada entrada:
-
-| Si la entrada es... | Acción |
-|---------------------|--------|
-| Feature terminada (`Estado: completado`) | No mover (git ya tiene el historial) |
-| Feature sin terminar (`Estado: en-progreso` o `bloqueado`) | Copiar a `inbox.md > ## Features en progreso` |
-| Error encontrado sin resolver (`tipo: error`, sin `fix` posterior) | Copiar a `inbox.md > ## Bugs pendientes` |
-| Decisión relevante a largo plazo | Copiar a `inbox.md > ## Por revisar` |
-| Lección permanente (error recurrente, patrón confirmado) | **Promover directamente** a `long-term/<dominio>.md` |
-
-3. Al promover a `long-term/`, añadir la entrada en la sección correspondiente:
-   - Errores de UI/CSS → `long-term/ui_and_styling.md > ## Lecciones aprendidas`
-   - Cuellos de botella → `long-term/performance.md > ## Lecciones aprendidas`
-   - Vulnerabilidades → `long-term/security.md > ## Lecciones aprendidas`
-
-4. Limpiar `session.md`: vaciar `## Registro de sesión` y actualizar timestamp.
+| Si la entrada contiene... | El plugin la mueve a... |
+|---------------------------|------------------------|
+| `**Estado**: completado` | 🗑️ Descartada (git ya tiene el historial) |
+| `**Estado**: en-progreso` o `bloqueado` | 📋 `inbox.md > ## Features en progreso` |
+| `error` o `bug` sin `fix` | 📋 `inbox.md > ## Bugs pendientes` |
+| Palabras de UI/CSS + lección/error | 🏛️ `long-term/ui_and_styling.md` |
+| Palabras de rendimiento + lección/error | 🏛️ `long-term/performance.md` |
+| Palabras de seguridad + lección/error | 🏛️ `long-term/security.md` |
+| Resto sin clasificar | 📋 `inbox.md > ## Por revisar` |
 
 ---
 
-## Protocolo: Limpieza Periódica (`cleanup`)
+## Lectura de memoria (al iniciar)
 
-**Quién**: Nexus, semanalmente o cuando se detecte acumulación.
-**Qué hace**:
+`session.md` se carga automáticamente vía `instructions` en `opencode.json`. Al iniciar una tarea, el agente ya tiene el contexto de la sesión anterior.
 
-1. Leer `inbox.md`.
-2. Para cada entrada con timestamp > 14 días:
-   - Si no ha sido revisada ni promovida → **eliminar**.
-   - Si fue promovida a `long-term/` → **eliminar de inbox**.
-3. Para entradas en `## Por revisar` > 7 días sin acción → preguntar al usuario si descartar.
-
----
-
-## 🚫 Reglas estrictas
-
-1. **NUNCA** escribir en `long-term/` sin pasar por el protocolo `promote`.
-2. **NUNCA** escribir en `session.md` sin seguir el formato determinista (`## [timestamp] @agente | tipo`).
-3. **SIEMPRE** usar `memory-cycle log` para registrar, no escritura directa.
-4. **SIEMPRE** leer `session.md` e `inbox.md` al iniciar (Nexus lo hace automáticamente).
+Además, cada agente lee bajo demanda su archivo de largo plazo específico:
+- Leo, Nexus → `long-term/ui_and_styling.md`, `long-term/performance.md`
+- Cloe → `long-term/ui_and_styling.md`
+- Max → `long-term/ui_and_styling.md`, `long-term/performance.md`
+- Ada → `long-term/performance.md`
+- Cipher → `long-term/security.md`
 
 ---
 
 ## Flujo visual
 
 ```
-INICIO SESIÓN                    DURANTE SESIÓN                  FIN SESIÓN
-─────────────                    ──────────────                  ──────────
-Nexus: init                      Agentes: log                   Nexus: promote
-     │                                │                              │
-     ├─ lee session.md               ├─ @leo | decisión             ├─ feature completada → descartar
-     ├─ crea/limpia si >24h          ├─ @cloe | wip                 ├─ feature WIP → inbox.md
-     ├─ lee inbox.md                 ├─ @felix | error              ├─ bug pendiente → inbox.md
-     └─ lee long-term/               └─ @felix | fix                ├─ lección → long-term/
-                                                                   └─ limpia session.md
+┌─────────────────────────────────────────────────────────┐
+│                    RUNTIME (PLUGIN)                      │
+│                                                         │
+│  session.created ──► INIT: promote + cleanup session.md │
+│  session.idle    ──► PROMOTE + CLEANUP inbox.md         │
+│  session.compacting ─► INJECT session.md                │
+│                                                         │
+│  ⚡ 100% determinista, NUNCA se olvida                   │
+└─────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                    LLM (AGENTES)                         │
+│                                                         │
+│  Al iniciar: session.md ya está cargado                 │
+│  Durante:    solo hacen log (escriben en session.md)    │
+│  Al leer:    long-term/ bajo demanda                    │
+│                                                         │
+│  🎯 Solo se preocupan de registrar, no de gestionar     │
+└─────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🚫 Reglas estrictas
+
+1. **SOLO** escribir en `session.md` siguiendo el formato `## [timestamp] @agente | tipo`.
+2. **NUNCA** escribir directamente en `inbox.md` o `long-term/` (el plugin lo hace).
+3. **SIEMPRE** leer `long-term/` antes de empezar una tarea del dominio correspondiente.
+4. **NO** preocuparse por `init`, `promote` o `cleanup` — el plugin lo gestiona.
 
 ---
 
 ## Responsabilidad por agente
 
-| Agente | Operaciones que usa |
-|--------|-------------------|
-| **Nexus** | `init`, `promote`, `cleanup` |
-| **Leo** | `log` (decisiones de arquitectura) |
-| **Cloe** | `log` (wip, decisiones de implementación) |
-| **Félix** | `log` (error, fix, descubrimiento) |
-| **Ada** | `log` (decisión de refactor, descubrimiento) |
-| **Cipher** | `log` (vulnerabilidad, fix de seguridad) |
-| **Max** | `log` (error encontrado en QA, descubrimiento) |
+| Agente | ¿Qué hace con la memoria? |
+|--------|--------------------------|
+| **Nexus** | Lee `session.md` (auto-cargado) + `long-term/`. Hace `log` de decisiones de enrutamiento. |
+| **Leo** | Lee `long-term/`. Hace `log` de decisiones de arquitectura. |
+| **Cloe** | Lee `long-term/ui_and_styling.md`. Hace `log` de wip y decisiones de implementación. |
+| **Félix** | Hace `log` de `error` + `fix`. El plugin promueve la lección a `long-term/`. |
+| **Ada** | Lee `long-term/performance.md`. Hace `log` de decisiones de refactor. |
+| **Cipher** | Lee `long-term/security.md`. Hace `log` de vulnerabilidades y fixes. |
+| **Max** | Lee `long-term/`. Hace `log` de hallazgos en QA. |
