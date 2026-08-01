@@ -62,22 +62,34 @@ Agentes disponibles en `.opencode/agents/`:
 | `ada` | Optimizadora — refactorización y Big O | `@ada` |
 | `cipher` | DevSecOps — seguridad y OWASP | `@cipher` |
 
+### 🌿 Feature Branches (Obligatorio)
+
+**Nunca se commitea en `main`.** Cada tarea va en su propia rama:
+
+| Prefijo | Uso | Agente |
+|---------|-----|--------|
+| `feature/` | Nuevas funcionalidades | Nexus, Leo |
+| `fix/` | Corrección de bugs | Félix |
+| `refactor/` | Refactorización | Ada |
+| `security/` | Parches de seguridad | Cipher |
+| `chore/` | Mantenimiento/config | Cualquiera |
+
 ### Flujo recomendado para nuevas features
 
 ```
-@nexus → @leo (arquitectura) → @cloe (implementación) → @max (QA) → @cipher (seguridad si aplica)
+feature/nueva-feature: @nexus → @leo (arquitectura) → @cloe (implementación) → @max (QA) → @cipher (seguridad si aplica) → merge a main
 ```
 
 ### Flujo para bugs
 
 ```
-@felix → fix → actualizar memoria → @max (verificar build)
+fix/<bug>: @felix → fix → actualizar memoria → @max (verificar build) → merge a main
 ```
 
 ### Flujo para optimización
 
 ```
-@ada → refactor → @max (verificar que no se rompió nada)
+refactor/<área>: @ada → refactor → @max (verificar que no se rompió nada) → merge a main
 ```
 
 ## MCP Apps

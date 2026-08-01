@@ -1,10 +1,61 @@
 # Skill: Conventional Commits — Formato Estándar de Commits
 
-**Objetivo**: Todos los agentes del equipo Antigravity deben seguir este formato al hacer commits. Es lectura obligatoria antes de cualquier `git commit`.
+**Objetivo**: Todos los agentes del equipo Antigravity deben seguir este formato al hacer commits y ramas. Es lectura obligatoria antes de cualquier `git commit` o `git branch`.
 
 ---
 
-## Formato
+## 🌿 Convención de Ramas (Feature Branches)
+
+Cada tarea debe desarrollarse en su **propia rama**, nunca directamente en `main`. Esto mantiene el historial limpio y agrupado por funcionalidad.
+
+### Formato de nombre de rama
+
+```
+<prefijo>/<descripción-breve-en-kebab-case>
+```
+
+### Prefijos y ejemplos
+
+| Prefijo | Cuándo usarlo | Ejemplo |
+|---------|--------------|---------|
+| `feature/` | Nueva funcionalidad | `feature/galeria-fotos` |
+| `fix/` | Corrección de bugs | `fix/overflow-chat-movil` |
+| `refactor/` | Refactorización | `refactor/queries-preparadas` |
+| `security/` | Parche de seguridad | `security/update-dompurify-cve` |
+| `chore/` | Mantenimiento/config | `chore/update-astro-v7` |
+
+### Flujo de trabajo
+
+```
+main ← ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+  │                               │
+  └── feature/nueva-funcionalidad │
+        │                         │
+        ├── feat: añade componente X
+        ├── feat: añade página Y
+        ├── style: ajusta espaciado
+        └── merge → ─ ─ ─ ─ ─ ─ ─┘
+```
+
+1. **Crear rama** desde `main`: `git checkout -b feature/<nombre>`
+2. **Hacer commits atómicos** siguiendo el formato de este skill
+3. **Merge a `main`** al terminar la feature
+
+### Responsabilidad por agente
+
+| Agente | Acción al iniciar |
+|--------|------------------|
+| **Nexus** | Crea `feature/` al delegar una nueva tarea |
+| **Leo** | Crea `feature/` al diseñar una feature nueva |
+| **Cloe** | Commitea dentro de la rama `feature/` existente |
+| **Félix** | Crea `fix/<bug>` al resolver un bug |
+| **Ada** | Crea `refactor/<área>` al optimizar código |
+| **Cipher** | Crea `security/<vuln>` al parchear seguridad |
+| **Max** | Trabaja en la rama de la feature que está auditando |
+
+---
+
+## 📝 Formato de Commits
 
 ```
 <tipo>(<alcance>): <descripción>
