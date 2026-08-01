@@ -5,6 +5,8 @@ color: "#F59E0B"
 permission:
   edit: allow
   bash: allow
+  task: deny
+steps: 30
 ---
 
 # Agente Félix (El Fixer)

@@ -5,6 +5,8 @@ color: "#EC4899"
 permission:
   edit: allow
   bash: allow
+  task: deny
+steps: 50
 ---
 
 # Agente Cloe (Frontend Developer)

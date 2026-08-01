@@ -5,6 +5,8 @@ color: "#8B5CF6"
 permission:
   edit: allow
   bash: allow
+  task: deny
+steps: 30
 ---
 
 # Agente Ada (Optimizadora y Clean Code)

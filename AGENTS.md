@@ -73,6 +73,7 @@ Agentes disponibles en `.opencode/agents/`:
 | `felix` | Fixer — debugging y root cause analysis | `@felix` |
 | `ada` | Optimizadora — refactorización y Big O | `@ada` |
 | `cipher` | DevSecOps — seguridad y OWASP | `@cipher` |
+| `analista` | Análisis de métricas y recomendaciones — solo a demanda | `@analista` |
 
 ### 🌿 Feature Branches (Obligatorio)
 
@@ -80,7 +81,7 @@ Agentes disponibles en `.opencode/agents/`:
 
 | Prefijo | Uso | Agente |
 |---------|-----|--------|
-| `feature/` | Nuevas funcionalidades | Nexus, Leo |
+| `feature/` | Nuevas funcionalidades | Nexus, Leo, Ada |
 | `fix/` | Corrección de bugs | Félix |
 | `refactor/` | Refactorización | Ada |
 | `security/` | Parches de seguridad | Cipher |
@@ -89,20 +90,73 @@ Agentes disponibles en `.opencode/agents/`:
 ### Flujo recomendado para nuevas features
 
 ```
-feature/nueva-feature: @nexus → @leo (arquitectura) → @cloe (implementación) → @max (QA) → @cipher (seguridad si aplica) → merge a main
+feature/nueva-feature: @nexus → @leo (arquitectura) → @cloe (implementación) → @ada (revisión SOLID/BigO) → @max (QA) → @cipher (seguridad si aplica) → merge a main
+
+> **Rollback**: Si @max detecta build roto o regresión, deriva a @felix para RCA + fix en lugar de devolver a @cloe.
 ```
 
 ### Flujo para bugs
 
 ```
 fix/<bug>: @felix → fix → actualizar memoria → @max (verificar build) → merge a main
+
+> **Rollback**: Si @max detecta build roto o regresión, deriva de nuevo a @felix para RCA + fix.
 ```
 
 ### Flujo para optimización
 
 ```
 refactor/<área>: @ada → refactor → @max (verificar que no se rompió nada) → merge a main
+
+> **Rollback**: Si @max detecta build roto o regresión, deriva a @felix para RCA + fix en lugar de devolver a @ada.
 ```
+
+## Sistema de Observabilidad de Agentes
+
+### Plugin metrics-observer (determinista)
+
+El plugin `.opencode/plugins/metrics-observer.ts` captura métricas **100% deterministas** en cada sesión de agente, sin intervención del LLM:
+
+| Hook | Acción |
+|------|--------|
+| `session.created` | Snapshot del estado inicial: agente activo, rama git, commit, timestamp |
+| `session.idle` | Diff vs snapshot: archivos modificados, líneas +/-, duración, errores en session.md. Agrega a runs.json y actualiza patterns. |
+
+### Archivos de métricas
+
+| Archivo | Contenido | Gestionado por |
+|---------|-----------|----------------|
+| `.agents/metrics/runs.json` | Histórico de ejecuciones (máx. 30) | Plugin (escritura) |
+| `.agents/metrics/patterns.json` | Patrones detectados con fingerprints y confianza | Plugin (escritura) |
+| `.agents/metrics/tuning-proposals.md` | Propuestas de ajuste para patrones ALTA (≥3 runs) | Plugin (escritura) |
+| `.agents/metrics/schema.md` | Documentación del contrato de datos | Manual |
+| `.agents/metrics/queue/inbox/` | Métricas crudas pendientes de procesar | Plugin (escritura/lectura) |
+
+### Confianza de patrones
+
+| Runs consecutivos | Confianza | Acción |
+|---|---|---|
+| ≥3 | ALTA | Propuesta en tuning-proposals.md |
+| 2 | MEDIA | Monitoreo pasivo |
+| 1 | BAJA | Registro |
+| 0 | RESUELTA | Limpieza automática |
+
+### Agente analista (semántico)
+
+El agente `@analista` se invoca **solo a demanda del usuario** para leer los datos del plugin y generar:
+- Reportes de desempeño por agente
+- Tendencias de duración, hotspots, tasa de errores
+- Recomendaciones proactivas basadas en patrones
+- Aplicación de propuestas pendientes en tuning-proposals.md
+
+**No es parte de ningún pipeline** — es puramente consultivo. Invocar con `@analista` o `@analista ¿cómo van los agentes?`.
+
+### Plugins del ecosistema
+
+| Plugin | Archivo | Función |
+|--------|---------|---------|
+| Memory Cycle | `.opencode/plugins/memory-cycle.ts` | Ciclo de vida de memoria (session → inbox → long-term) |
+| Metrics Observer | `.opencode/plugins/metrics-observer.ts` | Captura determinista de métricas de agentes |
 
 ## MCP Apps
 

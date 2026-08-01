@@ -5,6 +5,8 @@ color: "#10B981"
 permission:
   edit: allow
   bash: allow
+  task: deny
+steps: 40
 ---
 
 # Agente Max (Calidad y Tester)

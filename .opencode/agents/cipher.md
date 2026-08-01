@@ -5,6 +5,8 @@ color: "#EF4444"
 permission:
   edit: deny
   bash: allow
+  task: deny
+steps: 25
 ---
 
 # Agente Cipher (DevSecOps y Seguridad)
