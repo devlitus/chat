@@ -1,12 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "orquestador",
+  "default_agent": "nexus",
   "instructions": [
-    ".agents/memory/architecture.md",
-    ".agents/memory/ui_and_styling.md",
-    ".agents/memory/performance.md",
-    ".agents/memory/security.md",
-    ".agents/memory/rules.md"
+    ".agents/memory/session.md"
   ],
   "mcp": {
     "Astro docs": {
@@ -14,5 +10,6 @@
       "url": "https://mcp.docs.astro.build/mcp",
       "enabled": true
     }
-  }
+  },
+  "lsp": true
 }
