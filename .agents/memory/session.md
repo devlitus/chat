@@ -41,3 +41,10 @@ Se modificaron los pipelines en AGENTS.md:
 **Por qué**: El usuario pidió máximo determinismo, sin depender de un subagente para la captura. El plugin garantiza cobertura 100% en todas las sesiones. El analista añade la capa semántica sin ser dependencia de pipeline.
 **Archivos**: .opencode/plugins/metrics-observer.ts (nuevo), .opencode/agents/analista.md (nuevo), .agents/metrics/runs.json (nuevo), .agents/metrics/patterns.json (nuevo), .agents/metrics/tuning-proposals.md (nuevo), .agents/metrics/schema.md (nuevo), AGENTS.md (actualizado)
 
+## [2026-08-01] @nexus | decisión
+
+**Feature**: chore/commitlint-plugin
+**Estado**: completado
+**Qué**: Se eliminó por completo el ecosistema commitlint CLI (config, hooks y dependencias npm). Se creó `commitlint.ts` como plugin de OpenCode que (a) intercepta `git commit` en sesiones de agentes y valida mensajes, y (b) inyecta las reglas en el system prompt vía `experimental.chat.system.transform`. Es ahora la única fuente de verdad para Conventional Commits.
+**Por qué**: El usuario pidió organizar la config de commitlint dentro del ecosistema de plugins de OpenCode. Al eliminarse simple-git-hooks, el plugin es el único guardián de commits en el proyecto.
+**Archivos**: .opencode/plugins/commitlint.ts (nuevo), commitlint.config.js (eliminado), .simple-git-hooks.mjs (eliminado), package.json (limpiado: -3 devDeps, -script prepare), pnpm-lock.yaml (actualizado)
