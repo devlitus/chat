@@ -24,7 +24,8 @@ Este flujo se ejecuta al finalizar la escritura de una feature. Eres el guardiá
 Cuando el usuario (USER) invoca este flujo sobre un código recién escrito:
 
 0. **Lectura de Memoria (Obligatorio)**:
-   - Lee `.agents/memory/ui_and_styling.md` y, opcionalmente, `.agents/memory/performance.md`. Las reglas que encuentres allí son tu checklist de validación extra para este proyecto.
+   - Lee `.agents/memory/long-term/ui_and_styling.md` y `.agents/memory/long-term/performance.md`. Las reglas que encuentres allí son tu checklist de validación extra para este proyecto.
+   - Registra hallazgos de QA con el protocolo `memory-cycle log` (ver `.agents/skills/memory-cycle.md`).
 
 1. **Auditoría Técnica Estática (Sin ejecutar server)**:
    - Usa grep o lectura de archivos en los componentes creados recientemente.
@@ -46,6 +47,7 @@ Cuando el usuario (USER) invoca este flujo sobre un código recién escrito:
 5. **Aprendizaje y Memoria (Actualización de Reglas)**:
    - Si durante tu auditoría o la prueba de compilación encontraste un error, **TIENES LA OBLIGACIÓN** de añadir una nueva "Regla Aprendida" al archivo correspondiente:
      - `.agents/memory/ui_and_styling.md` para errores de componentes, CSS, Tailwind o accesibilidad.
-     - `.agents/memory/architecture.md` para errores de importaciones o estructura.
+      - `.agents/memory/long-term/ui_and_styling.md` para errores de componentes, CSS, Tailwind, estructura o accesibilidad.
+      - `.agents/memory/long-term/performance.md` para errores de rendimiento o build.
      - Explica brevemente el error y cómo evitarlo la próxima vez.
    - Si el comando **PASA**, la auditoría estática está limpia y has actualizado la memoria (si aplicaba): Declara la feature como `TERMINADA` y entrega un minirresumen al usuario.

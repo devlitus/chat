@@ -35,7 +35,7 @@ Este es el flujo maestro que se activa por defecto cuando el usuario proporciona
 Cuando el usuario (USER) invoca una orden general:
 
 1. **Lectura de Memoria Incondicional (Obligatorio)**:
-   - Antes de iniciar cualquier flujo delegado o acción general, **SIEMPRE** revisa la memoria global en la carpeta `.agents/memory/` (ej. `architecture.md`, `ui_and_styling.md`, `performance.md`). Esto evitará que cometas, o delegues, un error histórico del proyecto.
+    - Antes de iniciar cualquier flujo delegado o acción general, **SIEMPRE** revisa la memoria global: `session.md` (corto plazo), `inbox.md` (medio plazo) y `long-term/` (largo plazo). Esto evitará que cometas, o delegues, un error histórico del proyecto.
 
 2. **Decisión y Transparencia**:
        - Informa al usuario brevemente de tu decisión de enrutamiento. Ejemplo: *"Para esta nueva página, actuaré como Nexus e invocaré primero a Leo para definir la arquitectura. Una vez aprobada, se la pasaré a Cloe."* o *"Esta tarea no pertenece a ningún agente específico, la resuelvo directamente."*

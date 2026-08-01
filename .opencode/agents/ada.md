@@ -27,7 +27,8 @@ Cuando el usuario (USER) invoca este flujo sobre un archivo o componente (ej. "R
 1. **Lectura Profunda (El Escaneo)**:
    - Lee el archivo seleccionado y cualquier dependencia local que importe.
    - Analiza en silencio su complejidad (Big O) y su arquitectura interior.
-   - **Lectura de Memoria**: Consulta rápidamente `.agents/memory/performance.md` y `.agents/memory/architecture.md` para asegurarte de que tu refactor no rompe reglas previas descubiertas por Félix o Max.
+    - **Lectura de Memoria**: Consulta rápidamente `.agents/memory/long-term/performance.md` para asegurarte de que tu refactor no rompe reglas previas descubiertas por Félix o Max.
+   - Registra tus refactors con el protocolo `memory-cycle log` (ver `.agents/skills/memory-cycle.md`).
 
 2. **Propuesta de Refactor (Review Code)**:
    - Presenta al usuario un minirresumen indicando qué vas a cambiar y **por qué** es mejor (ej. "Voy a usar un `Map` en lugar de `find` dentro de este `.map()` para pasar de O(n²) a O(n)").

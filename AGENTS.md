@@ -35,18 +35,30 @@ TypeScript estricto (`astro/tsconfigs/strict`). CSS plano con estilos globales.
 - Modelo: `openai/gpt-oss-20b` con `reasoning_effort: 'low'` y `stream: true`
 - Los chunks de `reasoning_content` se ignoran en el cliente
 
-## Sistema de Memoria
+## Sistema de Memoria (3 Capas)
 
-Este proyecto usa un sistema de memoria dividida por dominios en `.agents/memory/`.
-**ANTES de cualquier tarea, lee los archivos de memoria relevantes:**
+Este proyecto usa un sistema de memoria en 3 capas con ciclo de vida determinista.
 
-- `.agents/memory/architecture.md` — Reglas de arquitectura, estructura, imports
-- `.agents/memory/ui_and_styling.md` — Tailwind, CSS, accesibilidad, responsive
-- `.agents/memory/performance.md` — Optimizaciones, Core Web Vitals, Big O
-- `.agents/memory/security.md` — Vulnerabilidades conocidas, secretos, OWASP
-- `.agents/memory/rules.md` — Reglas generales y lecciones aprendidas
+| Capa | Archivo | Vive | Contiene |
+|------|---------|------|----------|
+| **Corto plazo** | `.agents/memory/session.md` | 24h | Tarea actual, decisiones del día |
+| **Medio plazo** | `.agents/memory/inbox.md` | 1-2 sem | Features sin terminar, bugs pendientes |
+| **Largo plazo** | `.agents/memory/long-term/` | Todo el proyecto | Reglas, lecciones, patrones confirmados |
 
-Si un agente descubre un error recurrente o una nueva regla, **debe añadirlo** al archivo de memoria correspondiente.
+### Archivos de largo plazo
+
+- `.agents/memory/long-term/ui_and_styling.md` — Tailwind, CSS, accesibilidad, responsive
+- `.agents/memory/long-term/performance.md` — Optimizaciones, Core Web Vitals, Big O
+- `.agents/memory/long-term/security.md` — Vulnerabilidades conocidas, secretos, OWASP
+
+### Protocolo de memoria
+
+Todo agente debe usar el skill `memory-cycle` (`.agents/skills/memory-cycle.md`) para:
+- **`log`**: Registrar decisiones, errores y avances en `session.md`
+- **`promote`**: Mover lecciones a `inbox.md` o `long-term/`
+- **`cleanup`**: Eliminar entradas caducadas
+
+Si un agente descubre un error recurrente o una nueva regla, **debe registrarlo con `memory-cycle log` y promoverlo a `long-term/`** en el dominio correspondiente.
 
 ## Sistema Multi-Agente
 

@@ -22,7 +22,8 @@ Tu obligación como Arquitecto es hacer _push-back_ justificando técnicamente p
 Cuando el usuario (USER) invoca este flujo con una idea (ej. "quiero una galería fotográfica"):
 
 0. **Lectura de Memoria (Obligatorio)**:
-   - Antes de pensar, debes leer el archivo `.agents/memory/architecture.md`. Aplica todas las reglas arquitectónicas y decisiones de diseño allí descritas a tu nuevo diseño arquitectónico.
+   - Antes de pensar, lee `.agents/memory/long-term/ui_and_styling.md` y `.agents/memory/long-term/performance.md` para aplicar reglas existentes.
+   - Registra tus decisiones de arquitectura usando el protocolo `memory-cycle log` (ver `.agents/skills/memory-cycle.md`).
 
 1. **Lectura de la Estructura (Contexto Profundo)**:
    - Explora las carpetas principales del framework (`src/components`, `src/layouts`, `src/pages`, o `app/` si es Next.js App Router).
