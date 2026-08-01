@@ -1,6 +1,7 @@
 ---
 description: Orquestador Antigravity - Enrutamiento inteligente y ejecución general. Agente principal que analiza tareas y delega al subagente especializado adecuado.
 mode: primary
+color: "#FF5733"
 permission:
   edit: allow
   bash: allow
