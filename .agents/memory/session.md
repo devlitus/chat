@@ -45,6 +45,6 @@ Se modificaron los pipelines en AGENTS.md:
 
 **Feature**: chore/commitlint-plugin
 **Estado**: completado
-**Qué**: Se movió `commitlint.config.js` al ecosistema `.opencode/plugins/` por organización. Se creó `commitlint.ts` como plugin de OpenCode que (a) intercepta `git commit` en sesiones de agentes y valida mensajes, y (b) inyecta las reglas en el system prompt vía `experimental.chat.system.transform`. La config para el CLI (`commitlint.config.js`) se movió a `.opencode/plugins/` y `.simple-git-hooks.mjs` se actualizó para apuntar a `--config .opencode/plugins/commitlint.config.js`.
-**Por qué**: El usuario pidió organizar la config de commitlint dentro del ecosistema de plugins de OpenCode en lugar de tenerla suelta en la raíz.
-**Archivos**: .opencode/plugins/commitlint.ts (nuevo), .opencode/plugins/commitlint.config.js (movido desde raíz), .simple-git-hooks.mjs (actualizado), commitlint.config.js (eliminado de raíz)
+**Qué**: Se eliminó por completo el ecosistema commitlint CLI (config, hooks y dependencias npm). Se creó `commitlint.ts` como plugin de OpenCode que (a) intercepta `git commit` en sesiones de agentes y valida mensajes, y (b) inyecta las reglas en el system prompt vía `experimental.chat.system.transform`. Es ahora la única fuente de verdad para Conventional Commits.
+**Por qué**: El usuario pidió organizar la config de commitlint dentro del ecosistema de plugins de OpenCode. Al eliminarse simple-git-hooks, el plugin es el único guardián de commits en el proyecto.
+**Archivos**: .opencode/plugins/commitlint.ts (nuevo), commitlint.config.js (eliminado), .simple-git-hooks.mjs (eliminado), package.json (limpiado: -3 devDeps, -script prepare), pnpm-lock.yaml (actualizado)
