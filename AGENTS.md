@@ -54,7 +54,7 @@ Agentes disponibles en `.opencode/agents/`:
 
 | Agente | Rol | Invocación |
 |--------|-----|------------|
-| `orquestador` | Agente principal con enrutamiento dinámico | Default / `@orquestador` |
+| `nexus` | Agente principal con enrutamiento dinámico | Default / `@nexus` |
 | `leo` | Arquitecto y PM — diseño antes de código | `@leo` |
 | `cloe` | Frontend Developer — implementación Mobile-First | `@cloe` |
 | `max` | QA y Tester — build, SEO, accesibilidad | `@max` |
@@ -65,7 +65,7 @@ Agentes disponibles en `.opencode/agents/`:
 ### Flujo recomendado para nuevas features
 
 ```
-@orquestador → @leo (arquitectura) → @cloe (implementación) → @max (QA) → @cipher (seguridad si aplica)
+@nexus → @leo (arquitectura) → @cloe (implementación) → @max (QA) → @cipher (seguridad si aplica)
 ```
 
 ### Flujo para bugs

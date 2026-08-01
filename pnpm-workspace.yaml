@@ -2,6 +2,7 @@ allowBuilds:
   '@modelcontextprotocol/ext-apps': true
   esbuild: true
   sharp: true
+  simple-git-hooks: true
 
 onlyBuiltDependencies:
   - esbuild

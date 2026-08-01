@@ -1,6 +1,7 @@
 ---
 description: Agente Leo (Arquitecto y PM) - Fase de diseño y especificación visual/técnica. Define el "qué" y el "dónde" antes de escribir código. Usa Atomic Design y hace push-back técnico proactivo.
 mode: subagent
+color: "#3B82F6"
 permission:
   edit: allow
   bash: allow

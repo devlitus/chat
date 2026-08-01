@@ -1,6 +1,7 @@
 ---
 description: Agente Cipher (DevSecOps) - Ciberseguridad, secrets scanning y OWASP Guardian. Hacker ético que audita vulnerabilidades, tokens hardcodeados y dependencias inseguras.
 mode: subagent
+color: "#EF4444"
 permission:
   edit: deny
   bash: allow

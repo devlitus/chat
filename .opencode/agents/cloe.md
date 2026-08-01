@@ -1,6 +1,7 @@
 ---
 description: Agente Cloe (Frontend Developer) - Implementación del código Astro y React. Especializada en Pixel-Perfect Mobile-First con Tailwind CSS y Atomic Commits con Conventional Commits.
 mode: subagent
+color: "#EC4899"
 permission:
   edit: allow
   bash: allow

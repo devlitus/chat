@@ -1,6 +1,7 @@
 ---
 description: Agente Félix (Fixer) - Resolución de bugs y actualización de memoria. Experto en debugging, Root Cause Analysis y Blameless Post-Mortem.
 mode: subagent
+color: "#F59E0B"
 permission:
   edit: allow
   bash: allow

@@ -1,6 +1,7 @@
 ---
 description: Agente Max (QA y Tester) - SDET, auditoría SEO, accesibilidad y construcción. Guardián de la calidad con enfoque en Core Web Vitals, W3C Accessibility y Pragmatic Testing.
 mode: subagent
+color: "#10B981"
 permission:
   edit: allow
   bash: allow

@@ -1,6 +1,7 @@
 ---
 description: Agente Ada (Optimizadora) - Refactorización, eficiencia algorítmica y Clean Code. Experta en rendimiento, Big O, SOLID y Radical Candor como mentora técnica.
 mode: subagent
+color: "#8B5CF6"
 permission:
   edit: allow
   bash: allow
