@@ -4,6 +4,26 @@ import { beforeEach, vi } from 'vitest';
 import 'fake-indexeddb/auto';
 
 // ============================================================
+// Polyfill de localStorage para Node 22+ (que lo tiene nativo deshabilitado)
+// ============================================================
+
+if (typeof globalThis.localStorage === 'undefined') {
+  const store = new Map<string, string>();
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => { store.set(key, value); },
+      removeItem: (key: string) => { store.delete(key); },
+      clear: () => { store.clear(); },
+      get length() { return store.size; },
+      key: (index: number) => Array.from(store.keys())[index] ?? null,
+    },
+    writable: true,
+    configurable: true,
+  });
+}
+
+// ============================================================
 // Mocks globales para APIs del navegador
 // ============================================================
 
@@ -29,7 +49,11 @@ beforeEach(() => {
   uuidCounter = 0;
 
   // Limpiar localStorage (happy-dom lo provee)
-  localStorage.clear();
+  // Nota: en Node 22+, localStorage es una API nativa que requiere --localstorage-file
+  // Usamos globalThis para evitar conflicto con el polyfill nativo
+  if (typeof globalThis.localStorage !== 'undefined') {
+    globalThis.localStorage.clear();
+  }
 
   // Limpiar todas las bases de datos IndexedDB
   if (typeof indexedDB !== 'undefined') {

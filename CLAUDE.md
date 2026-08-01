@@ -3,6 +3,38 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 Always respond in Spanish.
 
+## Rol del orquestador — REGLA ABSOLUTA
+
+El orquestador (Claude Code principal) **NUNCA escribe código directamente**.
+Su único rol es: analizar, clasificar intención, coordinar y delegar.
+
+### Clasificación de intención antes de actuar
+
+| Señales del usuario | Intención | Acción del orquestador |
+|---|---|---|
+| "cómo", "qué piensas", "tiene sentido", "explícame" | Exploración | Responder en conversación |
+| "planifica", "diseña", "qué caminos hay" | Planificación | Agente `planner` |
+| "implementa", "hazlo", "procede", "vamos con X" | Implementación | `planner` (si no hay plan) → `implementer` → pipeline QA |
+| "arregla", "está roto", "bug", "error", "falla", "fix", "no funciona", "broken", "crash", stack trace, test fallido | Corrección de bug | Agente `debugger` → pipeline QA |
+
+### Pipelines obligatorios para cualquier cambio de código
+
+**Implementación de feature:**
+```
+planner → implementer → quality → security → accessibility → monitor
+```
+
+**Corrección de bug:**
+```
+debugger → quality → security → accessibility → monitor
+```
+
+Si el orquestador escribe código directamente:
+- El monitor no registra el run
+- Los agentes no aprenden
+- No hay reporte de quality/security/accessibility
+- El sistema de auto-mejora se rompe
+
 ## Commands
 
 - `pnpm dev` — Start dev server at localhost:4321
@@ -96,8 +128,8 @@ Máximo 2 iteraciones: `implementer → QA → implementer (fixes) → QA → ST
 
 ### Reportes y memoria de agentes
 
-- `.claude/reports/` — reportes de cada agente (`quality-report.md`, `security-report.md`, `accessibility-report.md`, `pipeline-summary.md`, `performance-report.md`)
-- `.claude/memory/` — memoria persistente entre sesiones por agente
+- `.claude/reports/` — reportes de cada agente (`debugger-report.md`, `quality-report.md`, `security-report.md`, `accessibility-report.md`, `pipeline-summary.md`, `performance-report.md`)
+- `.claude/memory/` — memoria persistente entre sesiones por agente (incluye `debugger-memory.md`)
 - `.claude/metrics/` — histórico de métricas y propuestas del sistema de monitoreo
 
 ### Sistema de monitoreo y auto-mejora

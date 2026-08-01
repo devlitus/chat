@@ -2,7 +2,8 @@
 
 import { useCallback } from 'react';
 import { useStore } from '@nanostores/react';
-import { $activeChatId, $isStreaming, $selectedModel } from '../../stores/chat-store';
+import { $activeChatId, $isStreaming, $selectedModel, $selectedProvider, $selectedGroqModel } from '../../stores/chat-store';
+import { WIDGET_URI_MAP } from '../../lib/api/tools';
 import {
   addUserMessage,
   updateChatInList,
@@ -30,6 +31,9 @@ export function SuggestionChips() {
     async (text: string) => {
       if (!activeChatId || isStreaming) return;
 
+      const provider = $selectedProvider.get();
+      const groqModel = $selectedGroqModel.get();
+
       // Reutilizar la misma logica de envio que ChatInput
       const userMessage = await addMessage(activeChatId, 'user', text);
       addUserMessage(userMessage);
@@ -52,20 +56,29 @@ export function SuggestionChips() {
         let fullContent = '';
         let rafPending = false;
 
-        for await (const token of streamChat(history, selectedModel || undefined)) {
-          fullContent += token;
-          if (!rafPending) {
-            rafPending = true;
-            requestAnimationFrame(() => {
-              updateStreaming(fullContent);
-              rafPending = false;
-            });
+        let detectedWidgetUri: string | undefined;
+        for await (const event of streamChat(history, selectedModel || undefined, provider, groqModel)) {
+          if (event.type === 'widget') {
+            detectedWidgetUri = event.uri;
+          } else {
+            fullContent += event.content;
+            if (!rafPending) {
+              rafPending = true;
+              requestAnimationFrame(() => {
+                updateStreaming(fullContent);
+                rafPending = false;
+              });
+            }
           }
         }
         // Flush final: garantiza que el atom refleja el contenido completo
         // antes de que finishStreaming procese el mensaje
         updateStreaming(fullContent);
-        const botMessage = await addMessage(activeChatId, 'assistant', fullContent);
+        const ALLOWED_WIDGET_URIS = new Set(Object.values(WIDGET_URI_MAP));
+        const safeUri = detectedWidgetUri && ALLOWED_WIDGET_URIS.has(detectedWidgetUri)
+          ? detectedWidgetUri
+          : undefined;
+        const botMessage = await addMessage(activeChatId, 'assistant', fullContent.trimEnd(), safeUri);
         finishStreaming(botMessage);
 
         // Refrescar lista de chats
@@ -76,7 +89,7 @@ export function SuggestionChips() {
         setBotError(`No se pudo obtener respuesta: ${errorMsg}`);
       }
     },
-    [activeChatId, isStreaming]
+    [activeChatId, isStreaming, selectedModel]
   );
 
   return (

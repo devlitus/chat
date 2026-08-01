@@ -1,15 +1,21 @@
 /* Chat Input Area & Textarea */
 .chat-input-area {
-  padding: 16px 24px;
+  padding: 0 24px 16px;
   background: rgba(16, 25, 34, 0.95);
   backdrop-filter: blur(4px);
-  border-top: 1px solid var(--color-border);
   width: 100%;
   max-width: 1024px;
   margin: 0 auto;
   position: sticky;
   bottom: 0;
   flex-shrink: 0;
+}
+
+.chat-input-area::before {
+  content: '';
+  display: block;
+  border-top: 1px solid var(--color-border);
+  padding-bottom: 16px;
 }
 
 .input-wrapper {

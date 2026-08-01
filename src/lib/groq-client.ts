@@ -1,20 +1,25 @@
 // src/lib/groq-client.ts
+import type { MessageContent } from './api/chat-stream';
 
 export interface ChatRequestBody {
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  messages: Array<{ role: 'user' | 'assistant'; content: MessageContent }>;
   model?: string;
   provider?: 'ollama' | 'groq';
   groqModel?: string;
   research?: boolean;
 }
 
+export type StreamEvent =
+  | { type: 'token'; content: string }
+  | { type: 'widget'; uri: string };
+
 export async function* streamChat(
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  messages: Array<{ role: 'user' | 'assistant'; content: MessageContent }>,
   model?: string,
   provider?: 'ollama' | 'groq',
   groqModel?: string,
   research?: boolean,
-): AsyncGenerator<string, void, unknown> {
+): AsyncGenerator<StreamEvent, void, unknown> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,10 +48,19 @@ export async function* streamChat(
         if (data === '[DONE]') return;
         try {
           const parsed = JSON.parse(data);
+
+          if (parsed.type === 'widget' && typeof parsed.uri === 'string') {
+            yield { type: 'widget', uri: parsed.uri };
+            continue;
+          }
+
           // Extraer SOLO el token estándar final. Ignoramos reasoning_content deliberadamente para no saturar al usuario,
           // lo que provocará que la UI muestre el Loading Spinner mientras el modelo piensa.
-          const token = parsed.choices?.[0]?.delta?.content;
-          if (token) yield token;
+          const rawToken = parsed.choices?.[0]?.delta?.content;
+          if (rawToken != null && rawToken !== '') {
+            const token = typeof rawToken === 'string' ? rawToken : String(rawToken);
+            yield { type: 'token', content: token };
+          }
         } catch {
           // Linea parcial, ignorar
         }

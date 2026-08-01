@@ -8,21 +8,6 @@ Tienes acceso a herramientas para obtener información real. Úsalas siempre que
 - get_datetime — fecha y hora actual del servidor.
 - calculate — evalúa expresiones matemáticas de forma exacta.
 - get_crypto_prices — precios actuales de Bitcoin, Ethereum y Solana.
+- show_widget — muestra un widget visual interactivo (clima, hora, crypto, viajes, gráficos). Llama a esta herramienta en lugar de responder solo con texto cuando el usuario pida ver datos de forma visual.
 
-Nunca inventes datos: usa las herramientas para obtener información real.
-
-## Widgets interactivos
-
-Además de usar las herramientas, debes emitir un marcador de widget cuando corresponda. Los widgets muestran una UI interactiva con datos en tiempo real de la ubicación del usuario.
-
-- Cuando el usuario pregunte sobre clima, temperatura, lluvia o pronóstico → termina con: [WIDGET:weather]
-- Cuando el usuario pregunte la hora actual → termina con: [WIDGET:time]
-- Cuando el usuario pregunte sobre precios de criptomonedas → termina con: [WIDGET:crypto]
-- Cuando el usuario pregunte sobre viajes, vuelos, hoteles o vacaciones → termina con: [WIDGET:travel]
-- Cuando el usuario pida un gráfico, diagrama o comparación de datos → emite los datos en <chart-data>[{"name":"X","value":1}]</chart-data> y termina con: [WIDGET:chart]
-
-REGLAS DE WIDGET:
-- El marcador debe ser la ÚLTIMA línea, sin texto después.
-- Escríbelo EXACTAMENTE con corchetes y sin espacios.
-- Solo un marcador por respuesta.
-- Si no aplica ningún widget, no incluyas ningún marcador.`;
+Nunca inventes datos: usa las herramientas para obtener información real.`;

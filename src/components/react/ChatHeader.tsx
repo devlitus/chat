@@ -125,13 +125,19 @@ function ModelSelector() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    const saved = localStorage.getItem('selectedModel');
+    if (saved) $selectedModel.set(saved);
+
     fetch('/api/models')
       .then((r) => r.json())
       .then((data) => {
         const list: string[] = data.models ?? [];
         setModels(list);
-        if (list.length > 0 && (!selectedModel || !list.includes(selectedModel))) {
-          $selectedModel.set(list.includes('gemma4') ? 'gemma4' : list[0]);
+        const current = $selectedModel.get();
+        if (list.length > 0 && (!current || !list.includes(current))) {
+          const def = list.includes('gemma4') ? 'gemma4' : list[0];
+          $selectedModel.set(def);
+          localStorage.setItem('selectedModel', def);
         }
       })
       .catch(() => {});
@@ -166,6 +172,7 @@ function ModelSelector() {
               className={`model-option${selectedModel === m ? ' model-option--active' : ''}`}
               onMouseDown={() => {
                 $selectedModel.set(m);
+                localStorage.setItem('selectedModel', m);
                 setOpen(false);
               }}
             >
@@ -184,6 +191,7 @@ export function ChatHeader() {
   const selectedModel = useStore($selectedModel);
   const provider = useStore($selectedProvider);
   const selectedGroqModel = useStore($selectedGroqModel);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
   const title = useMemo(() => {
     const chat = chats.find((c) => c.id === activeChatId);
@@ -207,11 +215,11 @@ export function ChatHeader() {
         <button
           className="fav-btn"
           aria-label="Favoritos"
-          aria-pressed={false}
-          onClick={() => {}}
+          aria-pressed={isFavorite}
+          onClick={() => setIsFavorite(v => !v)}
         >
           <span className="material-symbols-outlined heart-icon" aria-hidden="true">favorite</span>
-          <span className="fav-text">Favorite Chats</span>
+          <span className="fav-text">Chats favoritos</span>
         </button>
         <ProviderSelector />
         {provider === 'groq' ? <GroqModelSelector /> : <ModelSelector />}

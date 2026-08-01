@@ -15,9 +15,9 @@ export function MessageTextarea({ value, onChange, onKeyDown, disabled }: Props)
   return (
     <textarea
       ref={textareaRef}
-      placeholder="Type a message..."
+      placeholder="Escribe un mensaje..."
       rows={1}
-      aria-label="Type a message"
+      aria-label="Escribe un mensaje"
       value={value}
       onChange={onChange}
       onKeyDown={onKeyDown}
