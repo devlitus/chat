@@ -6,6 +6,3 @@ allowBuilds:
 onlyBuiltDependencies:
   - esbuild
   - sharp
-
-patchedDependencies:
-  '@astrojs/internal-helpers@0.7.5': patches/@astrojs__internal-helpers@0.7.5.patch
