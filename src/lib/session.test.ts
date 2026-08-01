@@ -11,7 +11,9 @@ import {
 
 describe('session.ts - localStorage', () => {
   beforeEach(() => {
-    localStorage.clear();
+    if (typeof globalThis.localStorage !== 'undefined') {
+      globalThis.localStorage.clear();
+    }
   });
 
   describe('getSession', () => {
