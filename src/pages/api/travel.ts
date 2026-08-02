@@ -1,6 +1,6 @@
 // src/pages/api/travel.ts
-// Endpoint de sugerencias de viaje usando Wikivoyage + LLM local (Tabiji Migration)
-// Pipeline: Validación → Wikivoyage Search → Wikivoyage Extracts → LLM Local → Parseo JSON → Fallback
+// Endpoint de sugerencias de viaje usando LLM local (conocimiento interno)
+// Pipeline: Validación → System Prompt → LLM Local → Parseo JSON → Validación → 200
 
 import type { APIRoute } from 'astro';
 
@@ -10,20 +10,13 @@ export const prerender = false;
 
 const LLM_URL = import.meta.env.LLM_LOCAL_URL || 'http://192.168.1.133:1234/v1';
 const LLM_MODEL = import.meta.env.LLM_LOCAL_MODEL || 'lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF';
-const WIKI_REST = 'https://en.wikivoyage.org/w/rest.php/v1';
-const WIKI_ACTION = 'https://en.wikivoyage.org/w/api.php';
 
-// ─── CONSTANTES (números mágicos) ───
+// ─── CONSTANTES ───
 
-const WIKIVOYAGE_TIMEOUT_MS = 5000;
 const LLM_TIMEOUT_MS = 25000;
 const LLM_TEMPERATURE = 0.7;
 const LLM_MAX_TOKENS = 2048;
 const MAX_SUGGESTIONS = 3;
-const MAX_EXTRACT_CHARS = 1500;
-const HIGHLIGHT_MIN_LENGTH = 10;
-const HIGHLIGHT_MAX_LENGTH = 80;
-const FALLBACK_EXTRACT_CHARS = 300;
 
 // ─── TIPOS ───
 
@@ -33,37 +26,6 @@ interface TravelSuggestion {
   description: string;
   estimatedCost: string;
   highlights: string[];
-}
-
-interface WikivoyageSearchPage {
-  id: number;
-  key: string;
-  title: string;
-  excerpt: string;
-  description?: string;
-}
-
-interface WikivoyageSearchResponse {
-  pages: WikivoyageSearchPage[];
-}
-
-interface WikivoyageExtractResponse {
-  query: {
-    pages: {
-      [pageId: string]: {
-        pageid: number;
-        title: string;
-        extract: string;
-      };
-    };
-  };
-}
-
-interface WikivoyageContext {
-  title: string;
-  description: string;
-  excerpt: string;
-  extract: string;
 }
 
 interface UserParams {
@@ -93,158 +55,6 @@ function jsonSuccess<T>(data: T): Response {
   return jsonResponse(data, 200);
 }
 
-// ─── HELPERS DE FETCH ───
-
-function isAbortError(err: unknown): boolean {
-  if (err instanceof Error) {
-    return err.name === 'AbortError' || (err as any).code === 'ABORT_ERR';
-  }
-  return false;
-}
-
-/** Clasifica un error de red en categorías diagnósticas para el cliente */
-interface ClassifiedError {
-  type: 'timeout' | 'dns' | 'connection' | 'ssl' | 'http' | 'ratelimit' | 'unknown';
-  userMessage: string;
-  technical: string;
-}
-
-function classifyFetchError(err: unknown, url: string): ClassifiedError {
-  // 1. Timeout (nuestro propio Error desde fetchWithTimeout)
-  if (err instanceof Error && err.message.startsWith('Timeout de')) {
-    return {
-      type: 'timeout',
-      userMessage: 'El servicio de viajes tardó demasiado en responder. Inténtalo de nuevo en unos segundos.',
-      technical: err.message,
-    };
-  }
-
-  // 2. AbortError crudo (no debería ocurrir con fetchWithTimeout, pero por si acaso)
-  if (isAbortError(err)) {
-    return {
-      type: 'timeout',
-      userMessage: 'El servicio de viajes tardó demasiado en responder. Inténtalo de nuevo en unos segundos.',
-      technical: `AbortError sin capturar para ${url}`,
-    };
-  }
-
-  // 3. Error de red (TypeError en Node.js: DNS, connection refused, etc.)
-  if (err instanceof TypeError) {
-    const msg = err.message.toLowerCase();
-    // Node.js 18+ usa err.cause para el error subyacente
-    const causeMsg = (err as any).cause?.message?.toLowerCase() || '';
-
-    if (msg.includes('fetch failed') || msg.includes('network') || causeMsg.includes('econnrefused')) {
-      return {
-        type: 'connection',
-        userMessage: 'No se pudo conectar con el servicio de viajes. Verifica tu conexión a internet.',
-        technical: `Connection error: ${err.message}${(err as any).cause ? ' | cause: ' + (err as any).cause.message : ''}`,
-      };
-    }
-
-    if (msg.includes('dns') || msg.includes('enotfound') || msg.includes('eai_again') ||
-        causeMsg.includes('enotfound') || causeMsg.includes('eai_again')) {
-      return {
-        type: 'dns',
-        userMessage: 'No se pudo conectar con el servicio de viajes. Verifica tu conexión a internet.',
-        technical: `DNS error: ${err.message}${(err as any).cause ? ' | cause: ' + (err as any).cause.message : ''}`,
-      };
-    }
-
-    if (msg.includes('ssl') || msg.includes('tls') || msg.includes('certificate') || msg.includes('unverified') ||
-        causeMsg.includes('ssl') || causeMsg.includes('tls')) {
-      return {
-        type: 'ssl',
-        userMessage: 'Error de seguridad al conectar con el servicio de viajes. Verifica la fecha y hora de tu sistema.',
-        technical: `SSL error: ${err.message}${(err as any).cause ? ' | cause: ' + (err as any).cause.message : ''}`,
-      };
-    }
-
-    return {
-      type: 'unknown',
-      userMessage: 'Error de red al consultar el servicio de viajes.',
-      technical: `TypeError: ${err.message}`,
-    };
-  }
-
-  // 4. Error genérico
-  return {
-    type: 'unknown',
-    userMessage: 'Error inesperado al consultar el servicio de viajes.',
-    technical: err instanceof Error ? err.message : String(err),
-  };
-}
-
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit = {},
-  timeoutMs: number
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    return response;
-  } catch (error) {
-    if (isAbortError(error)) {
-      throw new Error(`Timeout de ${timeoutMs}ms excedido para ${url}`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/** Intenta un fetch con un único retry en caso de timeout */
-async function fetchWithRetryOnTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number
-): Promise<Response> {
-  try {
-    return await fetchWithTimeout(url, options, timeoutMs);
-  } catch (firstError) {
-    if (firstError instanceof Error && firstError.message.startsWith('Timeout de')) {
-      console.warn(`[travel] Reintentando fetch a ${url} tras timeout...`);
-      return await fetchWithTimeout(url, options, timeoutMs);
-    }
-    throw firstError;
-  }
-}
-
-// ─── HELPERS DE LIMPIEZA DE JSON ───
-
-/** Extrae el contenido entre la primera `{` y la última `}` de un texto. */
-function extractJsonBraces(text: string): string {
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    return text.slice(firstBrace, lastBrace + 1);
-  }
-  return text;
-}
-
-function cleanJsonContent(raw: string): string {
-  let cleaned = raw.trim();
-
-  // Intento 1: buscar un objeto JSON directo
-  cleaned = extractJsonBraces(cleaned);
-
-  // Intento 2: limpiar markdown blocks ```json ... ```
-  const mdMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (mdMatch) {
-    cleaned = mdMatch[1].trim();
-    // Reintentar extracción de JSON dentro
-    cleaned = extractJsonBraces(cleaned);
-  }
-
-  return cleaned;
-}
-
 // ─── VALIDADOR DE SUGERENCIA ───
 
 function isValidSuggestion(item: unknown): item is TravelSuggestion {
@@ -262,31 +72,29 @@ function isValidSuggestion(item: unknown): item is TravelSuggestion {
 
 // ─── SYSTEM PROMPT ───
 
-function buildSystemPrompt(
-  wikiContext: WikivoyageContext[],
-  userParams: UserParams
-): string {
-  const contextJson = JSON.stringify(wikiContext, null, 2);
-  return `Eres un asistente especializado en planificación de viajes. Recibirás datos de Wikivoyage en inglés y los parámetros del usuario en español. Tu tarea es traducir, adaptar y enriquecer esos datos para producir sugerencias de viaje en español.
+function buildSystemPrompt(params: UserParams): string {
+  return `Eres un asistente especializado en planificación de viajes con amplio conocimiento sobre destinos turísticos de todo el mundo. Tu tarea es generar sugerencias de viaje personalizadas en español usando tu conocimiento interno.
 
 ## REGLAS ESTRICTAS
 
-1. **NO inventes información.** Todo lo que escribas debe estar basado en los datos de Wikivoyage proporcionados. Si un dato no está en el contexto, no lo incluyas.
-2. **Genera EXACTAMENTE ${MAX_SUGGESTIONS} sugerencias.** Ni más ni menos. Si solo tienes 2 páginas de Wikivoyage, adapta la información para crear ${MAX_SUGGESTIONS} variaciones (ej: "ruta cultural", "ruta gastronómica", "ruta naturaleza").
-3. **Traduce todo al español natural.** Nada de inglés en la salida. Usa un tono cálido y entusiasta, como un guía turístico experto.
-4. **estimatedCost debe reflejar el presupuesto del usuario.** Usa rangos como "$500-$800 USD", "$200-$400 USD", "$1,500-$2,500 USD" según el presupuesto indicado (Económico ≈ bajo, Standard ≈ medio, Lujo ≈ alto).
-5. **highlights debe tener exactamente ${MAX_SUGGESTIONS} elementos.** Cada uno debe ser una frase corta (máx. 5 palabras) que describa una atracción o actividad concreta del destino.
-
-## DATOS DE WIKIVOYAGE
-
-${contextJson}
+1. **Usa tu conocimiento interno.** Genera sugerencias basadas en lo que sabes sobre el destino. Sé específico: menciona lugares, barrios, platos típicos y actividades reales del destino.
+2. **NO inventes datos factuales falsos.** Si no estás seguro de un detalle concreto (ej: el nombre exacto de un templo o museo), sé vago pero no inventes. Por ejemplo: "un mercado tradicional de especias" en lugar de inventar un nombre.
+3. **Genera EXACTAMENTE ${MAX_SUGGESTIONS} sugerencias.** Cada una debe ser una ruta o experiencia diferente (ej: cultural, gastronómica, naturaleza, histórica, aventura).
+4. **Escribe todo en español natural.** Usa un tono cálido y entusiasta, como un guía turístico experto. Nada de inglés en la salida.
+5. **estimatedCost debe reflejar el presupuesto.** Usa rangos orientativos según el nivel:
+   - Económico: "$200-$600 USD"
+   - Standard: "$600-$1,500 USD"
+   - Lujo: "$1,500-$4,000 USD"
+   Adapta el rango según el destino (Tailandia es más barato que Suiza).
+6. **highlights debe tener exactamente 3 elementos.** Cada uno debe ser una frase corta de 3 a 5 palabras describiendo una atracción, actividad o experiencia concreta.
+7. **description debe tener 2 a 4 frases.** Describe el ambiente, las actividades principales y por qué esa experiencia es especial. Menciona al menos un lugar o actividad concreta.
 
 ## PARÁMETROS DEL USUARIO
 
-- Destino: ${userParams.destino}
-- Presupuesto: ${userParams.presupuesto}
-- Días: ${userParams.dias}
-- Intereses: ${userParams.intereses}
+- Destino: ${params.destino}
+- Presupuesto: ${params.presupuesto}
+- Días: ${params.dias}
+- Intereses: ${params.intereses || 'turismo general'}
 
 ## FORMATO DE SALIDA
 
@@ -297,7 +105,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
     {
       "id": "1",
       "title": "Nombre atractivo de la sugerencia en español",
-      "description": "2-3 frases describiendo el ambiente y actividades principales. Debe basarse en el extract de Wikivoyage.",
+      "description": "2-4 frases describiendo el ambiente y actividades principales.",
       "estimatedCost": "$XXX-$YYY USD",
       "highlights": ["Atracción 1", "Atracción 2", "Atracción 3"]
     },
@@ -321,214 +129,75 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
 NO envuelvas el JSON en bloques de markdown (\`\`\`json). Devuelve el JSON puro.`;
 }
 
-// ─── FALLBACK ───
+// ─── LLM: LLAMADA Y PARSEO ───
 
-function buildFallbackSuggestions(
-  wikiData: WikivoyageContext[],
-  userParams: UserParams
-): TravelSuggestion[] {
-  const budgetRanges: Record<string, string> = {
-    'Económico': '$200-$500 USD',
-    'Standard': '$500-$1,200 USD',
-    'Lujo': '$1,500-$3,000 USD',
-  };
-
-  const genericHighlights = [
-    'Centro histórico',
-    'Gastronomía local',
-    'Museos y cultura',
-    'Naturaleza y parques',
-    'Vida nocturna',
-    'Arquitectura emblemática',
-    'Mercados tradicionales',
-  ];
-
-  return wikiData.slice(0, MAX_SUGGESTIONS).map((page, i) => {
-    // Extraer frases clave del excerpt/extract como highlights
-    const contentText = (page.extract || page.excerpt || '');
-    const highlightCandidates = contentText
-      .split(/[.;]/)
-      .map(s => s.trim())
-      .filter(s => s.length > HIGHLIGHT_MIN_LENGTH && s.length < HIGHLIGHT_MAX_LENGTH)
-      .slice(0, MAX_SUGGESTIONS);
-
-    return {
-      id: String(i + 1),
-      title: `${page.title} — Descubre sus encantos`,
-      description: page.extract
-        ? page.extract.slice(0, FALLBACK_EXTRACT_CHARS) + (page.extract.length > FALLBACK_EXTRACT_CHARS ? '...' : '')
-        : `Explora ${page.title}, un destino fascinante lleno de historia, cultura y experiencias únicas. Información de Wikivoyage.`,
-      estimatedCost: budgetRanges[userParams.presupuesto] || budgetRanges['Standard'],
-      highlights: highlightCandidates.length >= MAX_SUGGESTIONS
-        ? highlightCandidates.slice(0, MAX_SUGGESTIONS)
-        : [
-            genericHighlights[i * MAX_SUGGESTIONS % genericHighlights.length],
-            genericHighlights[(i * MAX_SUGGESTIONS + 1) % genericHighlights.length],
-            genericHighlights[(i * MAX_SUGGESTIONS + 2) % genericHighlights.length],
-          ],
-    };
-  });
-}
-
-// ─── PIPELINE: FUNCIONES COMPONIBLES ───
-
-/** 3. Buscar páginas de Wikivoyage para el destino */
-async function searchWikivoyage(destination: string): Promise<WikivoyageSearchPage[]> {
-  const searchUrl = `${WIKI_REST}/search/page?q=${encodeURIComponent(destination)}&limit=${MAX_SUGGESTIONS}`;
-
-  let searchRes: Response;
-  try {
-    searchRes = await fetchWithRetryOnTimeout(searchUrl, {}, WIKIVOYAGE_TIMEOUT_MS);
-  } catch (fetchErr) {
-    const classified = classifyFetchError(fetchErr, searchUrl);
-    console.error(`[travel] Wikivoyage search falló [${classified.type}]:`, classified.technical);
-    throw classified;
-  }
-
-  if (!searchRes.ok) {
-    // ── 429: Rate Limit → retry 1 vez con backoff ──
-    if (searchRes.status === 429) {
-      const retryAfter = searchRes.headers.get('Retry-After');
-      const delayMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
-      console.warn(`[travel] Wikivoyage search HTTP 429, reintentando en ${delayMs}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-
-      let retryRes: Response;
-      try {
-        retryRes = await fetchWithTimeout(searchUrl, {}, WIKIVOYAGE_TIMEOUT_MS);
-      } catch (retryErr) {
-        const classified = classifyFetchError(retryErr, searchUrl);
-        console.error(`[travel] Wikivoyage search retry falló [${classified.type}]:`, classified.technical);
-        throw classified;
-      }
-
-      if (retryRes.ok) {
-        const searchData: WikivoyageSearchResponse = await retryRes.json();
-        return searchData.pages || [];
-      }
-
-      // Retry también falló con 429
-      if (retryRes.status === 429) {
-        const classified: ClassifiedError = {
-          type: 'ratelimit',
-          userMessage: 'El servicio de viajes está recibiendo muchas solicitudes. Espera unos segundos e inténtalo de nuevo.',
-          technical: `Wikivoyage HTTP 429 (tras retry): ${retryRes.statusText}`,
-        };
-        throw classified;
-      }
-
-      // Retry falló con otro código
-      console.error(`[travel] Wikivoyage search retry HTTP ${retryRes.status} (${retryRes.statusText})`);
-      const classified: ClassifiedError = {
-        type: 'http',
-        userMessage: retryRes.status === 503
-          ? 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.'
-          : 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.',
-        technical: `Wikivoyage HTTP ${retryRes.status} (tras retry): ${retryRes.statusText}`,
-      };
-      throw classified;
-    }
-
-    // ── Otros códigos HTTP (503, 404, 500, etc.) ──
-    console.error(`[travel] Wikivoyage search HTTP ${searchRes.status} (${searchRes.statusText})`);
-    const classified: ClassifiedError = {
-      type: 'http',
-      userMessage: searchRes.status === 503
-        ? 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.'
-        : 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.',
-      technical: `Wikivoyage HTTP ${searchRes.status}: ${searchRes.statusText}`,
-    };
-    throw classified;
-  }
-
-  const searchData: WikivoyageSearchResponse = await searchRes.json();
-  return searchData.pages || [];
-}
-
-/** 4. Obtener extracts de Wikivoyage en paralelo con fallback individual */
-async function fetchExtracts(pages: WikivoyageSearchPage[]): Promise<(string | null)[]> {
-  return Promise.all(
-    pages.map(async (page) => {
-      const extractUrl = `${WIKI_ACTION}?action=query&prop=extracts&exintro=1&explaintext=1&titles=${encodeURIComponent(page.key)}&format=json`;
-      try {
-        const extractRes = await fetchWithTimeout(extractUrl, {}, WIKIVOYAGE_TIMEOUT_MS);
-        if (!extractRes.ok) return null;
-        const data: WikivoyageExtractResponse = await extractRes.json();
-        const pageData = Object.values(data.query?.pages || {})[0];
-        return pageData?.extract || null;
-      } catch {
-        return null;
-      }
-    })
-  );
-}
-
-/** 5. Ensamblar el contexto de Wikivoyage, truncando extracts para reducir payload al LLM */
-function assembleContext(
-  pages: WikivoyageSearchPage[],
-  extracts: (string | null)[]
-): WikivoyageContext[] {
-  return pages.map((page, i) => ({
-    title: page.title,
-    description: (page.description || '').slice(0, MAX_EXTRACT_CHARS),
-    excerpt: (page.excerpt?.replace(/<[^>]+>/g, '') || '').slice(0, MAX_EXTRACT_CHARS),
-    extract: (extracts[i] || '').slice(0, MAX_EXTRACT_CHARS),
-  }));
-}
-
-/** 6. Llamar al LLM local (con parseo JSON, validación y fallback interno) */
-async function callLLM(
-  context: WikivoyageContext[],
-  userParams: UserParams
-): Promise<TravelSuggestion[]> {
-  const systemPrompt = buildSystemPrompt(context, userParams);
+async function fetchLLMSuggestions(params: UserParams): Promise<TravelSuggestion[]> {
+  const systemPrompt = buildSystemPrompt(params);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
 
   try {
-    const llmRes = await fetchWithTimeout(`${LLM_URL}/chat/completions`, {
+    const llmRes = await fetch(`${LLM_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: LLM_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Genera exactamente ${MAX_SUGGESTIONS} sugerencias de viaje.` },
+          { role: 'user', content: `Genera exactamente ${MAX_SUGGESTIONS} sugerencias de viaje para ${params.destino}.` },
         ],
         temperature: LLM_TEMPERATURE,
         max_tokens: LLM_MAX_TOKENS,
         response_format: { type: 'json_object' },
       }),
-    }, LLM_TIMEOUT_MS);
+      signal: controller.signal,
+    });
 
     if (!llmRes.ok) {
       console.error('[travel] LLM local respondió con error HTTP', llmRes.status);
-      throw new Error(`LLM HTTP ${llmRes.status}`);
+      throw new Error('El modelo de IA no está disponible. Verifica que LM Studio esté encendido y funcionando.');
     }
 
     const llmData = await llmRes.json();
     const rawContent = llmData.choices?.[0]?.message?.content || '{}';
 
-    // Parseo de JSON (2 intentos)
-    let parsed: { suggestions?: TravelSuggestion[] };
+    // Parseo de JSON (2 intentos: directo + limpieza de markdown)
+    let parsed: { suggestions?: unknown[] };
     try {
       parsed = JSON.parse(rawContent);
     } catch {
-      // Intento 2: limpiar markdown
-      const cleaned = cleanJsonContent(rawContent);
-      parsed = JSON.parse(cleaned);
+      const cleaned = rawContent
+        .replace(/```(?:json)?\s*/gi, '')
+        .replace(/```/g, '')
+        .trim();
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        console.error('[travel] JSON inválido del LLM:', rawContent.slice(0, 500));
+        throw new Error('El modelo de IA devolvió un formato incorrecto. Inténtalo de nuevo.');
+      }
     }
 
-    // Validar esquema
     if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
-      throw new Error('Respuesta del LLM sin array suggestions');
+      console.error('[travel] Respuesta del LLM sin array suggestions:', rawContent.slice(0, 300));
+      throw new Error('El modelo de IA no generó sugerencias válidas. Inténtalo de nuevo.');
     }
 
     const result = parsed.suggestions.filter(isValidSuggestion);
-    if (result.length === 0) throw new Error('Ninguna sugerencia válida del LLM');
+    if (result.length === 0) {
+      console.error('[travel] Ninguna sugerencia válida del LLM tras filtrar');
+      throw new Error('El modelo de IA no pudo generar sugerencias con el formato requerido. Inténtalo de nuevo.');
+    }
 
     return result;
-  } catch (llmError) {
-    console.error('[travel] LLM falló, usando fallback directo de Wikivoyage:', llmError);
-    return buildFallbackSuggestions(context, userParams);
+  } catch (err) {
+    // Timeout (AbortController)
+    if ((err as any)?.name === 'AbortError') {
+      throw new Error('El modelo de IA tardó demasiado en responder. Inténtalo de nuevo en unos segundos.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -556,55 +225,20 @@ export const POST: APIRoute = async ({ request }) => {
   }
   const days = Number(daysRaw);
 
+  const userParams: UserParams = {
+    destino: destination,
+    presupuesto: budget,
+    dias: days,
+    intereses: interests || 'turismo general',
+  };
+
+  // 2. Llamar al LLM local (única fuente de datos)
   try {
-    // 2. Wikivoyage search
-    let pages: WikivoyageSearchPage[];
-    try {
-      pages = await searchWikivoyage(destination);
-    } catch (err) {
-      // Clasificar el error para dar un mensaje orientativo al usuario
-      if (err && typeof err === 'object' && 'type' in err && 'userMessage' in err && 'technical' in err) {
-        const classified = err as ClassifiedError;
-        console.error(`[travel] Wikivoyage search falló [${classified.type}]: ${classified.technical}`);
-        const statusMap: Record<ClassifiedError['type'], number> = {
-          timeout: 502,
-          dns: 502,
-          connection: 502,
-          ssl: 502,
-          http: 502,
-          ratelimit: 503,
-          unknown: 502,
-        };
-        const status = statusMap[classified.type] || 502;
-        return jsonError(status, classified.userMessage);
-      }
-      console.error('[travel] Wikivoyage search falló (sin clasificar):', err);
-      return jsonError(502, 'No se pudo consultar la base de datos de viajes');
-    }
-
-    if (pages.length === 0) {
-      return jsonError(404, `No se encontró información de viaje para "${destination}"`);
-    }
-
-    // 3. Wikivoyage extracts (paralelo con fallback individual)
-    const extracts = await fetchExtracts(pages);
-
-    // 4. Ensamblar contexto (con truncado de extracts)
-    const wikivoyageContext = assembleContext(pages, extracts);
-
-    const userParams: UserParams = {
-      destino: destination,
-      presupuesto: budget,
-      dias: days,
-      intereses: interests || 'turismo general',
-    };
-
-    // 5. LLM local (con parseo y fallback interno)
-    const suggestions = await callLLM(wikivoyageContext, userParams);
-
+    const suggestions = await fetchLLMSuggestions(userParams);
     return jsonSuccess({ suggestions: suggestions.slice(0, MAX_SUGGESTIONS) });
-  } catch (error) {
-    console.error('[travel] Error inesperado:', error);
-    return jsonError(500, 'Error interno del servidor');
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error interno del servidor';
+    console.error('[travel] Error en endpoint:', message);
+    return jsonError(502, message);
   }
 };
