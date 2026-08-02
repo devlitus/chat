@@ -15,6 +15,7 @@ Su único rol es: analizar, clasificar intención, coordinar y delegar.
 | "cómo", "qué piensas", "tiene sentido", "explícame" | Exploración | Responder en conversación |
 | "planifica", "diseña", "qué caminos hay" | Planificación | Agente `planner` |
 | "implementa", "hazlo", "procede", "vamos con X", "nueva feature", "crea la funcionalidad de X" | Implementación de feature | Comando `/feature "<descripción>"` (skill `feature`, ver `.claude/skills/feature/SKILL.md`) |
+| "refactoriza", "refactor", "limpia este código", "reestructura X" | Refactor | Comando `/refactor "<descripción>"` (skill `refactor`, ver `.claude/skills/refactor/SKILL.md`) |
 | "arregla", "está roto", "bug", "error", "falla", "fix", "no funciona", "broken", "crash", stack trace, test fallido | Corrección de bug | Agente `debugger` → pipeline QA |
 
 ### Pipelines obligatorios para cualquier cambio de código
@@ -24,6 +25,9 @@ Su único rol es: analizar, clasificar intención, coordinar y delegar.
 planner → [aprobación explícita del usuario] → implementer → quality → security → accessibility* → performance-auditor* → monitor
 ```
 `*` condicional según "Ejecución selectiva" más abajo. Cada gate (quality/security/accessibility/performance-auditor) aplica su propio ciclo de corrección con `implementer` antes de avanzar al siguiente. El detalle paso a paso vive en `.claude/skills/feature/SKILL.md` — no reimplementes esta orquestación manualmente, invoca la skill.
+
+**Refactor de código — comando `/refactor "<descripción>"`:**
+Mismo pipeline que la implementación de feature (arriba), pero sin el paso de creación de rama — se ejecuta sobre la rama actual. Ver `.claude/skills/refactor/SKILL.md` (reutiliza los pasos de `feature/SKILL.md` en vez de duplicarlos).
 
 **Corrección de bug:**
 ```
