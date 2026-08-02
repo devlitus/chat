@@ -1,8 +1,10 @@
 // src/pages/api/travel.ts
-// Endpoint de sugerencias de viaje usando LLM local (conocimiento interno)
-// Pipeline: Validación → System Prompt → LLM Local → Parseo JSON → Validación → 200
+// Endpoint de sugerencias de viaje con soporte dual: LLM local (LM Studio) o Groq Cloud.
+// Pipeline: Validación → System Prompt → LLM (Local o Groq) → Parseo JSON → Validación → 200
 
 import type { APIRoute } from 'astro';
+import Groq from 'groq-sdk';
+import { DEFAULT_GROQ_MODEL } from '../../lib/groq-models';
 
 export const prerender = false;
 
@@ -13,10 +15,31 @@ const LLM_MODEL = import.meta.env.LLM_LOCAL_MODEL || 'lmstudio-community/Meta-Ll
 
 // ─── CONSTANTES ───
 
-const LLM_TIMEOUT_MS = 25000;
+const LLM_LOCAL_TIMEOUT_MS = 60000;
+const GROQ_TIMEOUT_MS = 60000;
 const LLM_TEMPERATURE = 0.7;
 const LLM_MAX_TOKENS = 2048;
 const MAX_SUGGESTIONS = 3;
+
+// Whitelist de modelos Groq (misma que /api/chat)
+const ALLOWED_GROQ_MODELS = new Set([
+  "llama-3.3-70b-versatile",
+  "llama-3.1-70b-versatile",
+  "llama-3.1-8b-instant",
+  "llama3-70b-8192",
+  "llama3-8b-8192",
+  "mixtral-8x7b-32768",
+  "gemma2-9b-it",
+  "gemma-7b-it",
+  "qwen-qwq-32b",
+  "deepseek-r1-distill-llama-70b",
+  "deepseek-r1-distill-qwen-32b",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "openai/gpt-oss-20b",
+  "compound-beta",
+  "compound-beta-mini",
+]);
 
 // ─── TIPOS ───
 
@@ -129,12 +152,46 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
 NO envuelvas el JSON en bloques de markdown (\`\`\`json). Devuelve el JSON puro.`;
 }
 
-// ─── LLM: LLAMADA Y PARSEO ───
+// ─── PARSEO DE JSON COMPARTIDO ───
 
-async function fetchLLMSuggestions(params: UserParams): Promise<TravelSuggestion[]> {
+function parseLLMResponse(rawContent: string): TravelSuggestion[] {
+  // Parseo de JSON (2 intentos: directo + limpieza de markdown)
+  let parsed: { suggestions?: unknown[] };
+  try {
+    parsed = JSON.parse(rawContent);
+  } catch {
+    const cleaned = rawContent
+      .replace(/```(?:json)?\s*/gi, '')
+      .replace(/```/g, '')
+      .trim();
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      console.error('[travel] JSON inválido del LLM:', rawContent.slice(0, 500));
+      throw new Error('El modelo de IA devolvió un formato incorrecto. Inténtalo de nuevo.');
+    }
+  }
+
+  if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
+    console.error('[travel] Respuesta del LLM sin array suggestions:', rawContent.slice(0, 300));
+    throw new Error('El modelo de IA no generó sugerencias válidas. Inténtalo de nuevo.');
+  }
+
+  const result = parsed.suggestions.filter(isValidSuggestion);
+  if (result.length === 0) {
+    console.error('[travel] Ninguna sugerencia válida del LLM tras filtrar');
+    throw new Error('El modelo de IA no pudo generar sugerencias con el formato requerido. Inténtalo de nuevo.');
+  }
+
+  return result;
+}
+
+// ─── LLM LOCAL ───
+
+async function fetchLocalTravelSuggestions(params: UserParams): Promise<TravelSuggestion[]> {
   const systemPrompt = buildSystemPrompt(params);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), LLM_LOCAL_TIMEOUT_MS);
 
   try {
     const llmRes = await fetch(`${LLM_URL}/chat/completions`, {
@@ -148,7 +205,10 @@ async function fetchLLMSuggestions(params: UserParams): Promise<TravelSuggestion
         ],
         temperature: LLM_TEMPERATURE,
         max_tokens: LLM_MAX_TOKENS,
-        response_format: { type: 'json_object' },
+        // Nota: response_format: { type: 'json_object' } eliminado.
+        // LM Studio con Gemma 4 solo acepta 'json_schema' o 'text'.
+        // El system prompt instruye al modelo a devolver JSON puro,
+        // y el parser tiene lógica de doble intento (directo + limpieza markdown).
       }),
       signal: controller.signal,
     });
@@ -161,39 +221,61 @@ async function fetchLLMSuggestions(params: UserParams): Promise<TravelSuggestion
     const llmData = await llmRes.json();
     const rawContent = llmData.choices?.[0]?.message?.content || '{}';
 
-    // Parseo de JSON (2 intentos: directo + limpieza de markdown)
-    let parsed: { suggestions?: unknown[] };
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch {
-      const cleaned = rawContent
-        .replace(/```(?:json)?\s*/gi, '')
-        .replace(/```/g, '')
-        .trim();
-      try {
-        parsed = JSON.parse(cleaned);
-      } catch {
-        console.error('[travel] JSON inválido del LLM:', rawContent.slice(0, 500));
-        throw new Error('El modelo de IA devolvió un formato incorrecto. Inténtalo de nuevo.');
-      }
-    }
-
-    if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
-      console.error('[travel] Respuesta del LLM sin array suggestions:', rawContent.slice(0, 300));
-      throw new Error('El modelo de IA no generó sugerencias válidas. Inténtalo de nuevo.');
-    }
-
-    const result = parsed.suggestions.filter(isValidSuggestion);
-    if (result.length === 0) {
-      console.error('[travel] Ninguna sugerencia válida del LLM tras filtrar');
-      throw new Error('El modelo de IA no pudo generar sugerencias con el formato requerido. Inténtalo de nuevo.');
-    }
-
-    return result;
+    return parseLLMResponse(rawContent);
   } catch (err) {
     // Timeout (AbortController)
     if ((err as any)?.name === 'AbortError') {
       throw new Error('El modelo de IA tardó demasiado en responder. Inténtalo de nuevo en unos segundos.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ─── LLM GROQ ───
+
+async function fetchGroqTravelSuggestions(params: UserParams, groqModel?: string): Promise<TravelSuggestion[]> {
+  const apiKey = import.meta.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY no está configurada. Configúrala en .env o usa el proveedor local.');
+  }
+
+  const groq = new Groq({ apiKey });
+  const systemPrompt = buildSystemPrompt(params);
+
+  // Validar el modelo contra la whitelist, usar default si no es válido
+  const modelId = (groqModel && ALLOWED_GROQ_MODELS.has(groqModel))
+    ? groqModel
+    : DEFAULT_GROQ_MODEL;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
+
+  try {
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Genera exactamente ${MAX_SUGGESTIONS} sugerencias de viaje para ${params.destino}.` },
+      ],
+      model: modelId,
+      temperature: LLM_TEMPERATURE,
+      max_completion_tokens: LLM_MAX_TOKENS,
+      stream: false,
+    }, { signal: controller.signal });
+
+    const rawContent = completion.choices?.[0]?.message?.content || '{}';
+
+    return parseLLMResponse(rawContent);
+  } catch (err) {
+    // Errores del SDK de Groq (APIError, APIConnectionError, etc.)
+    const groqErr = err as { status?: number; message?: string; name?: string };
+    if (groqErr.status) {
+      console.error('[travel] Groq API error:', groqErr.status, groqErr.message);
+      throw new Error(`Error del servicio Groq (${groqErr.status}). Inténtalo de nuevo.`);
+    }
+    if (groqErr.name === 'AbortError') {
+      throw new Error('Groq tardó demasiado en responder. Inténtalo de nuevo.');
     }
     throw err;
   } finally {
@@ -232,9 +314,16 @@ export const POST: APIRoute = async ({ request }) => {
     intereses: interests || 'turismo general',
   };
 
-  // 2. Llamar al LLM local (única fuente de datos)
+  // 2. Determinar proveedor (respeta el selector del usuario)
+  const provider = typeof body.provider === 'string' ? body.provider : undefined;
+  const normalizedProvider = (provider === 'groq') ? 'groq' : 'local';
+  const groqModel = typeof body.groqModel === 'string' ? body.groqModel : undefined;
+
+  // 3. Llamar al LLM según el proveedor
   try {
-    const suggestions = await fetchLLMSuggestions(userParams);
+    const suggestions = normalizedProvider === 'groq'
+      ? await fetchGroqTravelSuggestions(userParams, groqModel)
+      : await fetchLocalTravelSuggestions(userParams);
     return jsonSuccess({ suggestions: suggestions.slice(0, MAX_SUGGESTIONS) });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error interno del servidor';
