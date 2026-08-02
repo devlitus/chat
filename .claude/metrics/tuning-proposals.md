@@ -1,13 +1,13 @@
 # Propuestas de Ajuste de Agentes
 
-*Última actualización: 2026-08-02*
+*Última actualización: 2026-08-02T08:35:16Z*
 *El orquestador aplica propuestas [PENDIENTE] de confianza ALTA al inicio del siguiente pipeline, con git commit de checkpoint previo.*
 
 ---
 
 ## Propuestas Pendientes (ALTA confianza)
 
-(Sin propuestas activas con confianza ALTA. Dos patrones que fueron ALTA han sido resueltos en este run.)
+(Sin propuestas activas con confianza ALTA. Los 3 patrones BAJA del run feature anterior (2026-08-02T05:53:10Z) no se repitieron en el run bugfix, pasando a estado "resuelto".)
 
 ---
 
@@ -18,7 +18,9 @@
 **Sección sugerida**: `## Patrones de problemas recurrentes`
 **Acción**: ACTUALIZAR
 **Descripción**: Los errores TS2769/TS2339/TS7006 en chat-stream.ts persisten 5 ciclos sin resolución. Aunque el fix multimodal de 2026-06-07 resolvió el tipo content para ChatRequestBody, la incompatibilidad fundamental entre GroqMessage[] local y ChatCompletionMessageParam[] del SDK persiste. Actualizar la memoria con enfoque: crear wrapper de tipos seguro o discriminadores por `role` para que GroqMessage sea compatible con tipos del SDK groq-sdk. Proponer: crear `src/lib/types/groq-adapter.ts` con funciones type-safe de conversión.
+
 ---
+
 ## [APLICADA] quality-memory.md — documenta estabilidad BUILD+TESTS
 **Fingerprint**: `quality:global:build-tests-stability`
 **Confianza**: ALTA (4 runs consecutivos desde 2026-05-16, **resuelto en 2026-08-02**)
@@ -26,6 +28,7 @@
 **Sección sugerida**: `## Historial de builds`
 **Acción**: ACTUALIZAR
 **Descripción**: Patrón positivo confirmado: 4 builds consecutivos PASS con 49/49 tests. Sistema mantiene estabilidad a pesar de cambios frecuentes en tipos y streaming. Actualizar memoria: pipeline QA ha mantenido 100% test pass rate y build éxito en últimos 4 ciclos, indicador de robustez del sistema de validación. Mantener esta métrica visible para auditorias y decisiones futuras. **Estado**: Patrón no detectado en 2026-08-02; no requiere acción adicional.
+
 ---
 
 ## Propuestas Pendientes (BAJA/MEDIA confianza)
@@ -67,4 +70,4 @@
 - **pattern-004** (Build+tests stability): Patrón resuelto. No fue detectado en 2026-08-02. Indica que los cambios de layout del ModelSelector no introdujeron regresiones de estabilidad.
 - **pattern-006** (Parallel tool calls short-circuit): Bug UX secundario documentado. Monitorear si genera reportes de usuario.
 - **2026-06-07 run (image-processing)**: Agregó 13 nuevos fingerprints (6 quality, 4 security, 3 accessibility). Necesita 2 runs más para promoción a MEDIA (fingerprints) y 3 para ALTA. Priorizar patrones ALTA existentes primero.
-- **2026-08-02 run (ModelSelector relocation)**: Feature PASS. Agregó 3 nuevos fingerprints BAJA (ChatHeader unit tests, badge flex-shrink, coverage dependency). No hay patrones ALTA activos. Propuestas [APLICADA] anteriores ya no aparecen en historial activo.
+- **2026-08-02 run (bugfix auto-scroll)**: Registrado sin fingerprints nuevos. Los 3 patrones BAJA del run feature anterior pasaron a "resuelto" (no reaparecieron en archivos no modificados). Indica que el fix de auto-scroll y aria-hidden en MessageArea/MessageAvatar no introdujo problemas de calidad/seguridad/accesibilidad nuevos. Sistema de QA estable.

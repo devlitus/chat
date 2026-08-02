@@ -48,7 +48,7 @@ export function MessageArea() {
   const researchMode = useStore($researchMode);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight; }, [messages, streamingContent, botError]);
+  useEffect(() => { if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight; }, [messages, isStreaming, streamingContent, botError]);
 
   if (!initialized) return <div className="message-area" />;
 

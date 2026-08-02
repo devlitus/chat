@@ -249,9 +249,9 @@
       "description": "ChatHeader.tsx carece de tests unitarios para nuevas ramas condicionales (provider === 'groq', fallback badge)",
       "first_seen": "2026-08-02",
       "last_seen": "2026-08-02",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/styles/model-selector.css:fallback-badge-flex-shrink",
@@ -260,9 +260,9 @@
       "description": "Badge de fallback en ModelSelector carece de flex-shrink: 0, generando micro-CLS al resolver fetch",
       "first_seen": "2026-08-02",
       "last_seen": "2026-08-02",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:global:vitest-coverage-dependency-missing",
@@ -271,9 +271,9 @@
       "description": "Dependencia @vitest/coverage-v8 no instalada en entorno, impide auditoría de cobertura de pruebas",
       "first_seen": "2026-08-02",
       "last_seen": "2026-08-02",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     }
   ]
 }

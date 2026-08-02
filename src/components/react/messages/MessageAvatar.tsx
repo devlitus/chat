@@ -8,7 +8,7 @@ export function MessageAvatar({ role }: Props) {
 
   return (
     <div className={cls}>
-      <span className="material-symbols-outlined">{icon}</span>
+      <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
     </div>
   );
 }
