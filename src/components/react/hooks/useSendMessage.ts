@@ -26,7 +26,7 @@ function detectWidgetFromKeywords(userMessage: string): string | undefined {
   const isCrypto = lower.includes('crypto') || lower.includes('bitcoin') ||
     lower.includes('btc') || lower.includes('ethereum') ||
     lower.includes('eth') || lower.includes('solana') ||
-    lower.includes('sol') || lower.includes('criptomoneda') ||
+    lower.includes('sol') || lower.includes('cripto') ||
     (lower.includes('precio') && (lower.includes('moneda') || lower.includes('coin')));
   const isTravel = lower.includes('viaje') || lower.includes('vuelo') ||
     lower.includes('hotel') || lower.includes('destino') ||
