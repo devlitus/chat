@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useCallback } from 'react';
+import { memo, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { Message } from '../../../lib/db';
 import { renderMarkdown } from '../../../lib/markdown';
 import { MessageAvatar } from '../messages/MessageAvatar';
@@ -9,7 +9,7 @@ interface Props {
   message: Message;
 }
 
-export function BotMessage({ message }: Props) {
+function BotMessageImpl({ message }: Props) {
   const time = formatTime(message.createdAt);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
@@ -57,3 +57,8 @@ export function BotMessage({ message }: Props) {
     </div>
   );
 }
+
+// message es referencialmente estable mientras no cambie de contenido
+// (ver nota en MessageBubble.tsx), por lo que la comparación shallow
+// por defecto de memo evita recomputar renderMarkdown/handleCopy.
+export const BotMessage = memo(BotMessageImpl);
