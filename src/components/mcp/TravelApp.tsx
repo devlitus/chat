@@ -1,6 +1,7 @@
 import { useTravelData } from './travel/useTravelData';
 import { useStore } from '@nanostores/react';
-import { $selectedProvider } from '../../stores/chat-store';
+import { $selectedProvider, $selectedGroqModel } from '../../stores/chat-store';
+import { useEffect } from 'react';
 
 const styleId = '__travel-widget-keyframes';
 if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
@@ -383,6 +384,22 @@ export default function TravelApp() {
     interests, setInterests,
     suggestions, errorMsg, handleSubmit, setStep,
   } = useTravelData();
+
+  // Sincronizar el provider desde localStorage al montar (el iframe
+  // del MCP tiene su propia instancia del nanostore y no comparte
+  // estado con la página principal).
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedProvider');
+    const normalized = saved === 'ollama' ? 'local' : saved;
+    if (normalized === 'local' || normalized === 'groq') {
+      $selectedProvider.set(normalized);
+    }
+
+    const savedGroqModel = localStorage.getItem('selectedGroqModel');
+    if (savedGroqModel) {
+      $selectedGroqModel.set(savedGroqModel);
+    }
+  }, []);
 
   const provider = useStore($selectedProvider);
   const providerLabel = provider === 'groq' ? 'Groq' : 'IA local';

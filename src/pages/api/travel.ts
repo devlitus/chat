@@ -277,6 +277,11 @@ async function fetchGroqTravelSuggestions(params: UserParams, groqModel?: string
     if (groqErr.name === 'AbortError') {
       throw new Error('Groq tardó demasiado en responder. Inténtalo de nuevo.');
     }
+    // Error de conexión/red (APIConnectionError, "Premature close", etc.) sin status HTTP
+    if (groqErr.message) {
+      console.error('[travel] Groq connection error:', groqErr.message);
+      throw new Error('No se pudo conectar con Groq. Verifica tu conexión a internet o cambia al proveedor local.');
+    }
     throw err;
   } finally {
     clearTimeout(timer);

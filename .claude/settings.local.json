@@ -21,7 +21,16 @@
       "Bash(curl -s -m 5 http://localhost:4321/api/models)",
       "mcp__plugin_playwright_playwright__browser_navigate",
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
-      "mcp__plugin_playwright_playwright__browser_click"
+      "mcp__plugin_playwright_playwright__browser_click",
+      "Bash(cp /tmp/claude-1000/-home-carle-works-chat/e3b53de8-cdbf-45bc-b36e-b95c1875c84f/scratchpad/test-travel.mjs /home/carle/works/chat/test-travel.mjs)",
+      "Bash(node test-travel.mjs)",
+      "mcp__plugin_playwright_playwright__browser_network_request",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_network_requests",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Bash(mkdir -p \"/tmp/claude-1000/-home-carle-works-chat/e3b53de8-cdbf-45bc-b36e-b95c1875c84f/scratchpad/travel-verification\")",
+      "Bash(mv /home/carle/works/chat/01-groq-widget-inicial.png /home/carle/works/chat/02-groq-request-enviado.png /home/carle/works/chat/03-local-widget-resultado.png \"/tmp/claude-1000/-home-carle-works-chat/e3b53de8-cdbf-45bc-b36e-b95c1875c84f/scratchpad/travel-verification/\")"
     ]
   }
 }
