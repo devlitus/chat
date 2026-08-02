@@ -25,10 +25,21 @@ export function useTravelData() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ destination, budget, days, interests }),
       });
-      if (!res.ok) throw new Error('Error al obtener sugerencias');
+      if (!res.ok) {
+        // Leer el mensaje de error real del servidor en vez de descartarlo
+        let serverMsg = `Error del servidor (${res.status})`;
+        try {
+          const errorBody = await res.json();
+          if (errorBody?.error) serverMsg = errorBody.error;
+        } catch {
+          // Si el body no es JSON, usar el status text del servidor
+          serverMsg = res.statusText || serverMsg;
+        }
+        throw new Error(serverMsg);
+      }
       const data = await res.json();
       if (data.suggestions && Array.isArray(data.suggestions)) { setSuggestions(data.suggestions); setStep('results'); }
-      else throw new Error('Formato de respuesta inválido');
+      else throw new Error('La IA devolvió un formato de respuesta inesperado. Intenta de nuevo.');
     } catch (err) { setErrorMsg(err instanceof Error ? err.message : 'Error desconocido'); setStep('error'); }
   };
 

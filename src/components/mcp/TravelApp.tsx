@@ -397,7 +397,7 @@ export default function TravelApp() {
             </div>
             <div>
               <h2 style={s.titleGradient}>Planificador de Viajes</h2>
-              <p style={s.subtitle}>Impulsado por IA</p>
+              <p style={s.subtitle}>Datos de Wikivoyage &middot; IA local</p>
             </div>
           </div>
 
@@ -508,7 +508,7 @@ export default function TravelApp() {
               </div>
               <div style={{ textAlign: 'center' }}>
                 <h3 style={s.loadingTitle}>Diseñando tu viaje ideal</h3>
-                <p style={s.loadingSub}>Consultando agentes expertos...</p>
+                <p style={s.loadingSub}>Explorando Wikivoyage...</p>
               </div>
             </div>
           )}
@@ -557,6 +557,15 @@ export default function TravelApp() {
                     )}
                   </div>
                 ))}
+              </div>
+              <div style={{
+                textAlign: 'center' as const,
+                fontSize: '10px',
+                color: '#4b5563',
+                padding: '4px 0',
+                flexShrink: 0,
+              }}>
+                Datos obtenidos de Wikivoyage &middot; Enriquecidos con IA local
               </div>
               <button
                 onClick={() => setStep('form')}
