@@ -561,7 +561,7 @@ export default function TravelApp() {
               <div style={{
                 textAlign: 'center' as const,
                 fontSize: '10px',
-                color: '#4b5563',
+                color: '#9ca3af',
                 padding: '4px 0',
                 flexShrink: 0,
               }}>

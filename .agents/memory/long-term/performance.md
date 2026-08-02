@@ -7,7 +7,9 @@
 
 ## Reglas activas
 
-<!-- Reglas de rendimiento que todos los agentes deben cumplir -->
+- **Handler monolítico → funciones SRP**: Todo handler POST/GET de más de 80 líneas debe dividirse en funciones con una sola responsabilidad (search, fetch, assemble, call). El handler queda como orquestador de < 50 líneas.
+- **Números mágicos → constantes nombradas**: Todo número mágico (timeouts, límites, temperaturas, tokens, índices) debe definirse como `const` al inicio del módulo con nombre descriptivo en `UPPER_SNAKE_CASE`.
+- **Lógica duplicada → función pura**: Si un mismo patrón de código aparece en 2+ lugares (ej: extracción de `{...}`), se extrae a función pura sin efectos secundarios.
 
 ## Lecciones aprendidas
 

@@ -104,7 +104,7 @@ function isAbortError(err: unknown): boolean {
 
 /** Clasifica un error de red en categorías diagnósticas para el cliente */
 interface ClassifiedError {
-  type: 'timeout' | 'dns' | 'connection' | 'ssl' | 'http' | 'unknown';
+  type: 'timeout' | 'dns' | 'connection' | 'ssl' | 'http' | 'ratelimit' | 'unknown';
   userMessage: string;
   technical: string;
 }
@@ -386,10 +386,56 @@ async function searchWikivoyage(destination: string): Promise<WikivoyageSearchPa
   }
 
   if (!searchRes.ok) {
+    // ── 429: Rate Limit → retry 1 vez con backoff ──
+    if (searchRes.status === 429) {
+      const retryAfter = searchRes.headers.get('Retry-After');
+      const delayMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
+      console.warn(`[travel] Wikivoyage search HTTP 429, reintentando en ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+
+      let retryRes: Response;
+      try {
+        retryRes = await fetchWithTimeout(searchUrl, {}, WIKIVOYAGE_TIMEOUT_MS);
+      } catch (retryErr) {
+        const classified = classifyFetchError(retryErr, searchUrl);
+        console.error(`[travel] Wikivoyage search retry falló [${classified.type}]:`, classified.technical);
+        throw classified;
+      }
+
+      if (retryRes.ok) {
+        const searchData: WikivoyageSearchResponse = await retryRes.json();
+        return searchData.pages || [];
+      }
+
+      // Retry también falló con 429
+      if (retryRes.status === 429) {
+        const classified: ClassifiedError = {
+          type: 'ratelimit',
+          userMessage: 'El servicio de viajes está recibiendo muchas solicitudes. Espera unos segundos e inténtalo de nuevo.',
+          technical: `Wikivoyage HTTP 429 (tras retry): ${retryRes.statusText}`,
+        };
+        throw classified;
+      }
+
+      // Retry falló con otro código
+      console.error(`[travel] Wikivoyage search retry HTTP ${retryRes.status} (${retryRes.statusText})`);
+      const classified: ClassifiedError = {
+        type: 'http',
+        userMessage: retryRes.status === 503
+          ? 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.'
+          : 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.',
+        technical: `Wikivoyage HTTP ${retryRes.status} (tras retry): ${retryRes.statusText}`,
+      };
+      throw classified;
+    }
+
+    // ── Otros códigos HTTP (503, 404, 500, etc.) ──
     console.error(`[travel] Wikivoyage search HTTP ${searchRes.status} (${searchRes.statusText})`);
     const classified: ClassifiedError = {
       type: 'http',
-      userMessage: 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.',
+      userMessage: searchRes.status === 503
+        ? 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.'
+        : 'El servicio de información de viajes no está disponible en este momento. Inténtalo más tarde.',
       technical: `Wikivoyage HTTP ${searchRes.status}: ${searchRes.statusText}`,
     };
     throw classified;
@@ -520,7 +566,16 @@ export const POST: APIRoute = async ({ request }) => {
       if (err && typeof err === 'object' && 'type' in err && 'userMessage' in err && 'technical' in err) {
         const classified = err as ClassifiedError;
         console.error(`[travel] Wikivoyage search falló [${classified.type}]: ${classified.technical}`);
-        const status = classified.type === 'http' ? 502 : 502;
+        const statusMap: Record<ClassifiedError['type'], number> = {
+          timeout: 502,
+          dns: 502,
+          connection: 502,
+          ssl: 502,
+          http: 502,
+          ratelimit: 503,
+          unknown: 502,
+        };
+        const status = statusMap[classified.type] || 502;
         return jsonError(status, classified.userMessage);
       }
       console.error('[travel] Wikivoyage search falló (sin clasificar):', err);
