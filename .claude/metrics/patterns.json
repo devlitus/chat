@@ -5,22 +5,22 @@
       "agent": "quality",
       "file": "src/lib/api/chat-stream.ts",
       "description": "Incompatibilidad de tipos entre GroqMessage y ChatCompletionMessageParam",
-      "consecutive_runs": 5,
+      "consecutive_runs": 0,
       "first_seen": "2026-05-16",
-      "last_seen": "2026-06-07",
-      "status": "activo",
-      "confidence": "ALTA"
+      "last_seen": "2026-08-02",
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:global:build-tests-stability",
       "agent": "quality",
       "file": null,
       "description": "Build y tests en estado estable (49/49 PASS)",
-      "consecutive_runs": 4,
+      "consecutive_runs": 0,
       "first_seen": "2026-05-16",
-      "last_seen": "2026-06-07",
-      "status": "activo",
-      "confidence": "ALTA"
+      "last_seen": "2026-08-02",
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/pages/api/chat.ts:groq-models-hardcoded-list",
@@ -28,10 +28,10 @@
       "file": "src/pages/api/chat.ts",
       "description": "Lista estática hardcodeada de modelos Groq sin sincronización con /api/groq-models",
       "first_seen": "2026-06-07",
-      "last_seen": "2026-06-07",
-      "consecutive_runs": 2,
-      "status": "activo",
-      "confidence": "MEDIA"
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/components/react/ChatHeader.tsx:useeffect-missing-deps",
@@ -39,10 +39,10 @@
       "file": "src/components/react/ChatHeader.tsx",
       "description": "useEffect sin dependencias genera requests repetidos a /api/groq-models",
       "first_seen": "2026-06-07",
-      "last_seen": "2026-06-07",
-      "consecutive_runs": 2,
-      "status": "activo",
-      "confidence": "MEDIA"
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:package.json:vitest-critical-vulnerability",
@@ -61,10 +61,10 @@
       "file": "package.json",
       "description": "4 CVEs moderados en DOMPurify 3.3.2 (bypassos de sanitización)",
       "first_seen": "2026-06-07",
-      "last_seen": "2026-06-07",
-      "consecutive_runs": 2,
-      "status": "activo",
-      "confidence": "MEDIA"
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:package.json:vite-hono-rollup-vulnerabilities",
@@ -72,10 +72,10 @@
       "file": "package.json",
       "description": "Vulnerabilidades altas: vite (file read), hono (endpoint), rollup (path traversal)",
       "first_seen": "2026-06-07",
-      "last_seen": "2026-06-07",
-      "consecutive_runs": 2,
-      "status": "activo",
-      "confidence": "MEDIA"
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:src/components/react/messages/BotMessage.tsx:dangerous-innerhtml-dompurify",
@@ -83,10 +83,10 @@
       "file": "src/components/react/messages/BotMessage.tsx",
       "description": "dangerouslySetInnerHTML con DOMPurify vulnerable",
       "first_seen": "2026-06-07",
-      "last_seen": "2026-06-07",
-      "consecutive_runs": 2,
-      "status": "activo",
-      "confidence": "MEDIA"
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:src/pages/api/chat.ts:error-message-exposure",
@@ -94,10 +94,10 @@
       "file": "src/pages/api/chat.ts",
       "description": "error.message expuesto en respuestas 500 puede filtrar detalles internos",
       "first_seen": "2026-06-07",
-      "last_seen": "2026-06-07",
-      "consecutive_runs": 2,
-      "status": "activo",
-      "confidence": "MEDIA"
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/components/react/hooks/useSendMessage.ts:non-null-assertions-narrowing",
@@ -106,9 +106,9 @@
       "description": "Non-null assertions en pendingFile sin narrowing directo permitiendo potencial nulo en runtime",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/components/react/utils/build-history-context.ts:array-includes-on-multimodal",
@@ -117,9 +117,9 @@
       "description": "Métodos de string (.includes, .match) sin guarda typeof en content que puede ser array multimodal",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/components/react/hooks/useFileUpload.ts:pending-file-duplicate-type",
@@ -128,9 +128,9 @@
       "description": "Tipo PendingFile duplicado entre useFileUpload.ts y useSendMessage.ts sin exportar",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/pages/api/chat.test.ts:missing-multimodal-content-tests",
@@ -139,9 +139,9 @@
       "description": "Sin tests para validateMessages con content array (formato multimodal OpenAI)",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/components/react/hooks/useSendMessage.ts:chart-keywords-divergence",
@@ -150,9 +150,9 @@
       "description": "Keywords de chart duplicadas y divergentes entre isChartTopic y detectWidgetFromKeywords",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "quality:src/lib/groq-client.ts:sse-parser-missing-buffer",
@@ -161,9 +161,9 @@
       "description": "Parser SSE sin buffer acumulador puede perder tokens si evento llega partido entre chunks",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:src/components/react/hooks/useFileUpload.ts:dos-no-size-limit-base64",
@@ -172,9 +172,9 @@
       "description": "DoS: sin límite de tamaño antes de conversión base64 en cliente",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:src/pages/api/chat.ts:dos-no-body-limit",
@@ -183,9 +183,9 @@
       "description": "DoS: sin límite de tamaño de body en endpoint POST /api/chat",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:src/components/react/hooks/useFileUpload.ts:mime-type-browser-only-no-magic",
@@ -194,9 +194,9 @@
       "description": "Validación de tipo MIME basada solo en reporte del navegador sin verificación de magic bytes",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "security:src/lib/api/chat-stream.ts:image-url-missing-url-field-validation",
@@ -205,9 +205,9 @@
       "description": "isValidContent no verifica presencia de .url en partes image_url",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "accessibility:src/components/react/MessageArea.tsx:error-bubble-no-alert-role",
@@ -216,9 +216,9 @@
       "description": "ErrorBubble sin role=\"alert\" no anuncia errores críticos a tecnologías asistivas",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "accessibility:src/components/react/input/MessageTextarea.tsx:inconsistent-language-english",
@@ -227,9 +227,9 @@
       "description": "Placeholders y labels en inglés mientras UI está en español causa inconsistencia WCAG 3.2.4",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
-      "consecutive_runs": 1,
-      "status": "activo",
-      "confidence": "BAJA"
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
     },
     {
       "fingerprint": "accessibility:src/components/react/ChatHeader.tsx:aria-pressed-hardcoded-false",
@@ -238,6 +238,39 @@
       "description": "aria-pressed hardcodeado en falso no refleja estado real del botón Favoritos",
       "first_seen": "2026-06-07",
       "last_seen": "2026-06-07",
+      "consecutive_runs": 0,
+      "status": "resuelto",
+      "confidence": "RESUELTA"
+    },
+    {
+      "fingerprint": "quality:src/components/react/ChatHeader.tsx:missing-unit-tests-conditional",
+      "agent": "quality",
+      "file": "src/components/react/ChatHeader.tsx",
+      "description": "ChatHeader.tsx carece de tests unitarios para nuevas ramas condicionales (provider === 'groq', fallback badge)",
+      "first_seen": "2026-08-02",
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 1,
+      "status": "activo",
+      "confidence": "BAJA"
+    },
+    {
+      "fingerprint": "quality:src/styles/model-selector.css:fallback-badge-flex-shrink",
+      "agent": "quality",
+      "file": "src/styles/model-selector.css",
+      "description": "Badge de fallback en ModelSelector carece de flex-shrink: 0, generando micro-CLS al resolver fetch",
+      "first_seen": "2026-08-02",
+      "last_seen": "2026-08-02",
+      "consecutive_runs": 1,
+      "status": "activo",
+      "confidence": "BAJA"
+    },
+    {
+      "fingerprint": "quality:global:vitest-coverage-dependency-missing",
+      "agent": "quality",
+      "file": null,
+      "description": "Dependencia @vitest/coverage-v8 no instalada en entorno, impide auditoría de cobertura de pruebas",
+      "first_seen": "2026-08-02",
+      "last_seen": "2026-08-02",
       "consecutive_runs": 1,
       "status": "activo",
       "confidence": "BAJA"

@@ -1,15 +1,19 @@
 # Propuestas de Ajuste de Agentes
 
-*Última actualización: 2026-06-07*
+*Última actualización: 2026-08-02*
 *El orquestador aplica propuestas [PENDIENTE] de confianza ALTA al inicio del siguiente pipeline, con git commit de checkpoint previo.*
 
 ---
 
 ## Propuestas Pendientes (ALTA confianza)
 
+(Sin propuestas activas con confianza ALTA. Dos patrones que fueron ALTA han sido resueltos en este run.)
+
+---
+
 ## [APLICADA] quality-memory.md — resolver tipos GroqMessage SDK
 **Fingerprint**: `quality:src/lib/api/chat-stream.ts:ts-type-compatibility`
-**Confianza**: ALTA (5 runs consecutivos desde 2026-05-16)
+**Confianza**: ALTA (5 runs consecutivos desde 2026-05-16, **resuelto en 2026-08-02**)
 **Archivo objetivo**: `.claude/memory/quality-memory.md`
 **Sección sugerida**: `## Patrones de problemas recurrentes`
 **Acción**: ACTUALIZAR
@@ -17,11 +21,11 @@
 ---
 ## [APLICADA] quality-memory.md — documenta estabilidad BUILD+TESTS
 **Fingerprint**: `quality:global:build-tests-stability`
-**Confianza**: ALTA (4 runs consecutivos desde 2026-05-16)
+**Confianza**: ALTA (4 runs consecutivos desde 2026-05-16, **resuelto en 2026-08-02**)
 **Archivo objetivo**: `.claude/memory/quality-memory.md`
 **Sección sugerida**: `## Historial de builds`
 **Acción**: ACTUALIZAR
-**Descripción**: Patrón positivo confirmado: 4 builds consecutivos PASS con 49/49 tests. Sistema mantiene estabilidad a pesar de cambios frecuentes en tipos y streaming. Actualizar memoria: pipeline QA ha mantenido 100% test pass rate y build éxito en últimos 4 ciclos, indicador de robustez del sistema de validación. Mantener esta métrica visible para auditorias y decisiones futuras.
+**Descripción**: Patrón positivo confirmado: 4 builds consecutivos PASS con 49/49 tests. Sistema mantiene estabilidad a pesar de cambios frecuentes en tipos y streaming. Actualizar memoria: pipeline QA ha mantenido 100% test pass rate y build éxito en últimos 4 ciclos, indicador de robustez del sistema de validación. Mantener esta métrica visible para auditorias y decisiones futuras. **Estado**: Patrón no detectado en 2026-08-02; no requiere acción adicional.
 ---
 
 ## Propuestas Pendientes (BAJA/MEDIA confianza)
@@ -52,14 +56,15 @@
 
 ## Propuestas Aplicadas
 
-- **quality-memory.md — resolver tipos GroqMessage SDK** — Aplicada 2026-06-07. Documentado patrón groq-adapter.ts y resolución de TS2769/TS2339/TS7006.
-- **quality-memory.md — documenta estabilidad BUILD+TESTS** — Aplicada 2026-06-07. Baseline de robustez: 4 runs consecutivos 49/49 tests PASS.
+- **quality-memory.md — resolver tipos GroqMessage SDK** — Aplicada 2026-06-07. Documentado patrón groq-adapter.ts y resolución de TS2769/TS2339/TS7006. Patrón resuelto 2026-08-02 (no aparece en run actual).
+- **quality-memory.md — documenta estabilidad BUILD+TESTS** — Aplicada 2026-06-07. Baseline de robustez: 4 runs consecutivos 49/49 tests PASS. Patrón resuelto 2026-08-02.
 
 ---
 
 ## Observaciones
 
 - **pattern-003** (URI validation): CERRADO — M-NEW-01 resuelto en run-002 vía triple barrera (detectWidgetFromKeywords + ALLOWED_WIDGET_URIS + ALLOWED_UI_PATHS).
-- **pattern-004** (Build+tests stability): Métrica positiva sostenida (4/4 runs PASS 49/49). Mantener.
+- **pattern-004** (Build+tests stability): Patrón resuelto. No fue detectado en 2026-08-02. Indica que los cambios de layout del ModelSelector no introdujeron regresiones de estabilidad.
 - **pattern-006** (Parallel tool calls short-circuit): Bug UX secundario documentado. Monitorear si genera reportes de usuario.
 - **2026-06-07 run (image-processing)**: Agregó 13 nuevos fingerprints (6 quality, 4 security, 3 accessibility). Necesita 2 runs más para promoción a MEDIA (fingerprints) y 3 para ALTA. Priorizar patrones ALTA existentes primero.
+- **2026-08-02 run (ModelSelector relocation)**: Feature PASS. Agregó 3 nuevos fingerprints BAJA (ChatHeader unit tests, badge flex-shrink, coverage dependency). No hay patrones ALTA activos. Propuestas [APLICADA] anteriores ya no aparecen en historial activo.

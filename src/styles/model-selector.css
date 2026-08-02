@@ -54,6 +54,7 @@
 /* Model Selector Dropdown */
 .model-selector {
   position: relative;
+  flex-shrink: 0;
 }
 
 .model-btn {
@@ -113,6 +114,11 @@
   z-index: 50;
   max-height: 240px;
   overflow-y: auto;
+}
+
+.chat-header-left .model-dropdown {
+  right: auto;
+  left: 0;
 }
 
 .model-option {

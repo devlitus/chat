@@ -230,6 +230,40 @@
         "accessibility:src/components/react/input/MessageTextarea.tsx:inconsistent-language-english",
         "accessibility:src/components/react/ChatHeader.tsx:aria-pressed-hardcoded-false"
       ]
+    },
+    {
+      "id": "2026-08-02T05:53:10Z",
+      "date": "2026-08-02",
+      "branch": "main",
+      "pipeline_type": "feature",
+      "verdict": "PASS",
+      "debugger": null,
+      "quality": {
+        "build": "PASS",
+        "types_errors": 0,
+        "tests_pass": 49,
+        "tests_fail": 0,
+        "issues_critical": 0,
+        "issues_warnings": 3
+      },
+      "security": {
+        "audit": "FAIL",
+        "vuln_high": 17,
+        "vuln_medium": 45,
+        "vuln_low": 7,
+        "findings_active": 0
+      },
+      "accessibility": {
+        "level_a": "PASS",
+        "level_aa": "PARCIAL",
+        "issues_critical": 0,
+        "issues_important": 1
+      },
+      "fingerprints": [
+        "quality:src/components/react/ChatHeader.tsx:missing-unit-tests-conditional",
+        "quality:src/styles/model-selector.css:fallback-badge-flex-shrink",
+        "quality:global:vitest-coverage-dependency-missing"
+      ]
     }
   ]
 }

@@ -158,7 +158,13 @@ function ModelSelector() {
       .catch(() => {});
   }, []);
 
-  if (models.length === 0) return null;
+  if (models.length === 0) {
+    return (
+      <span className="badge">
+        {selectedModel ? modelDisplayName(selectedModel) : 'gemma4'}
+      </span>
+    );
+  }
 
   const displayName = selectedModel ? modelDisplayName(selectedModel) : '—';
 
@@ -203,7 +209,6 @@ function ModelSelector() {
 export function ChatHeader() {
   const chats = useStore($chats);
   const activeChatId = useStore($activeChatId);
-  const selectedModel = useStore($selectedModel);
   const provider = useStore($selectedProvider);
   const selectedGroqModel = useStore($selectedGroqModel);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
@@ -213,18 +218,18 @@ export function ChatHeader() {
     return chat?.title ?? 'Nuevo chat';
   }, [chats, activeChatId]);
 
-  const headerModelName = provider === 'groq'
-    ? (selectedGroqModel || 'Groq')
-    : (selectedModel ? modelDisplayName(selectedModel) : 'gemma4');
-
   return (
     <header className="chat-header">
       <div className="chat-header-left">
         <h2>
           <span className="material-symbols-outlined star-icon">auto_awesome</span>
-          <span>{title}</span>
+          <span className="chat-title-text">{title}</span>
         </h2>
-        <span className="badge">{headerModelName}</span>
+        {provider === 'groq' ? (
+          <span className="badge">{selectedGroqModel || 'Groq'}</span>
+        ) : (
+          <ModelSelector />
+        )}
       </div>
       <div className="chat-header-right">
         <button
@@ -237,7 +242,7 @@ export function ChatHeader() {
           <span className="fav-text">Chats favoritos</span>
         </button>
         <ProviderSelector />
-        {provider === 'groq' ? <GroqModelSelector /> : <ModelSelector />}
+        {provider === 'groq' && <GroqModelSelector />}
       </div>
     </header>
   );

@@ -15,7 +15,13 @@
       "Bash(git commit *)",
       "Skill(update-config)",
       "Bash(bash -c ' *)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(pkill -f \"astro dev\")",
+      "Bash(disown)",
+      "Bash(curl -s -m 5 http://localhost:4321/api/models)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_click"
     ]
   }
 }
