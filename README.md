@@ -4,6 +4,8 @@ Una aplicación web moderna de chat con IA construida con **Astro 5**, **React**
 
 ![Chat AI Interface](./stitch_chatbot_interface/screen.png)
 
+![Header con selector de modelo](./public/header-inicial.png)
+
 ## ✨ Características
 
 - 🤖 **Chat con IA en tiempo real** - Streaming de respuestas con Groq API
