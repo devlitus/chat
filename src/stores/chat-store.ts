@@ -15,7 +15,10 @@ export const $streamingContent = atom<string>('');
 export const $botError = atom<string | null>(null);
 export const $searchQuery = atom<string>('');
 export const $selectedModel = atom<string>('');
-export const $selectedProvider = atom<'ollama' | 'groq'>('ollama');
+// 'local' representa el servidor LLM local (LM Studio/Ollama vía API
+// OpenAI-compatible). Antes se llamaba 'ollama'; ver migración de
+// localStorage en ChatHeader.tsx para usuarios con el valor viejo persistido.
+export const $selectedProvider = atom<'local' | 'groq'>('local');
 export const $selectedGroqModel = atom<string>('llama-3.3-70b-versatile');
 export const $researchMode = atom<boolean>(false);
 export const $researchProgress = atom<ResearchProgressEvent | null>(null);

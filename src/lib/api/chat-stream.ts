@@ -12,7 +12,10 @@ export type MessageContent = string | ContentPart[];
 type Message = { role: 'user' | 'assistant'; content: MessageContent };
 type OllamaMessage = { role: 'user' | 'assistant' | 'system' | 'tool'; content: MessageContent | null; tool_calls?: ToolCall[]; tool_call_id?: string };
 
-const OLLAMA_TIMEOUT_MS = 30_000;
+// 120s: el servidor local confirmado es LM Studio, que puede tardar en
+// cargar un modelo grande en memoria (JIT model loading) en la primera
+// petición tras encender el servidor.
+const OLLAMA_TIMEOUT_MS = 120_000;
 
 export async function streamOllama(messages: Message[], requestModel?: string): Promise<ReadableStream> {
   const baseUrl = import.meta.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';

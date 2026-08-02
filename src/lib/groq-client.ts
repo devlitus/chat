@@ -4,7 +4,7 @@ import type { MessageContent } from './api/chat-stream';
 export interface ChatRequestBody {
   messages: Array<{ role: 'user' | 'assistant'; content: MessageContent }>;
   model?: string;
-  provider?: 'ollama' | 'groq';
+  provider?: 'local' | 'groq';
   groqModel?: string;
   research?: boolean;
 }
@@ -16,7 +16,7 @@ export type StreamEvent =
 export async function* streamChat(
   messages: Array<{ role: 'user' | 'assistant'; content: MessageContent }>,
   model?: string,
-  provider?: 'ollama' | 'groq',
+  provider?: 'local' | 'groq',
   groqModel?: string,
   research?: boolean,
 ): AsyncGenerator<StreamEvent, void, unknown> {

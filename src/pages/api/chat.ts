@@ -15,8 +15,11 @@ function contentToString(content: MessageContent): string {
     .join('');
 }
 
-// Ollama model names: lowercase alphanumeric, hyphens, dots, colons (for tags), slashes (for namespaced models)
-const OLLAMA_MODEL_RE = /^[a-z0-9][a-z0-9_.\-:/]{0,99}$/i;
+// Nombres de modelo del servidor local: alfanuméricos en minúscula, guiones,
+// puntos, dos puntos (tags de Ollama), barras (rutas anidadas de LM Studio,
+// p.ej. "lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/....Q4_K_M.gguf").
+// Límite subido a 200 para admitir ids largos típicos de LM Studio.
+const OLLAMA_MODEL_RE = /^[a-z0-9][a-z0-9_.\-:/]{0,199}$/i;
 const ALLOWED_GROQ_MODELS = new Set([
   "llama-3.3-70b-versatile",
   "llama-3.1-70b-versatile",
@@ -35,6 +38,18 @@ const ALLOWED_GROQ_MODELS = new Set([
   "compound-beta",
   "compound-beta-mini",
 ]);
+
+// Valor de proveedor expuesto al store/cliente: 'local' | 'groq'.
+// Se acepta 'ollama' como alias legacy tanto en el body del request como en
+// la env var LLM_PROVIDER, para no romper despliegues existentes que ya
+// tuvieran ese valor persistido (localStorage) o configurado en su .env.
+type Provider = 'local' | 'groq';
+
+function normalizeProvider(value: unknown): Provider | undefined {
+  if (value === 'local' || value === 'ollama') return 'local';
+  if (value === 'groq') return 'groq';
+  return undefined;
+}
 
 export const prerender = false;
 
@@ -66,10 +81,10 @@ export const POST: APIRoute = async ({ request }) => {
       typeof model === "string" && OLLAMA_MODEL_RE.test(model)
         ? model
         : undefined;
-    const provider =
-      reqProvider === "ollama" || reqProvider === "groq"
-        ? reqProvider
-        : (import.meta.env.LLM_PROVIDER ?? "ollama");
+    const provider: Provider =
+      normalizeProvider(reqProvider) ??
+      normalizeProvider(import.meta.env.LLM_PROVIDER) ??
+      "local";
     const isResearch = research === true;
     const isGroq = provider === "groq";
     const rawGroqModel = typeof groqModel === "string" ? groqModel : undefined;

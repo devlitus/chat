@@ -25,7 +25,9 @@ REGLAS:
 - Cita la fuente cuando uses informacion especifica de una URL.
 - Si fetch_url falla para una URL, continua con las demas.`;
 
-const OLLAMA_TIMEOUT_MS = 60_000;
+// 120s: mismo criterio que chat-stream.ts — LM Studio puede tardar en
+// cargar un modelo grande en memoria en la primera petición.
+const OLLAMA_TIMEOUT_MS = 120_000;
 const MAX_ITERATIONS = 12;
 const GROQ_MAX_HISTORY = 40;
 
@@ -340,7 +342,7 @@ async function runDeepResearchGroq(messages: Message[], requestModel?: string): 
 
 export async function streamDeepResearch(
   messages: Message[],
-  provider: 'ollama' | 'groq',
+  provider: 'local' | 'groq',
   requestModel?: string,
 ): Promise<ReadableStream> {
   if (provider === 'groq') {
