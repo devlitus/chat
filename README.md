@@ -1,115 +1,50 @@
-# Chat AI - Aplicación de Chat con IA
+# 💬 Chat AI
 
-Una aplicación web moderna de chat con IA construida con **Astro 5**, **React**, y **Groq API**. MVP funcional con persistencia local, streaming en tiempo real y diseño responsivo.
+<p align="center">
+  <img alt="Astro" src="https://img.shields.io/badge/Astro-5-BC52EE?logo=astro&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
+  <img alt="Groq" src="https://img.shields.io/badge/IA-Groq-F55036">
+  <img alt="Estado" src="https://img.shields.io/badge/estado-en%20desarrollo%20activo-brightgreen">
+  <img alt="Hecho con" src="https://img.shields.io/badge/hecho%20con-%E2%9D%A4-red">
+</p>
 
-![Header con selector de modelo](./public/header-inicial.png)
+Chat AI es un asistente conversacional para hablar con inteligencia artificial, tan sencillo de usar como cualquier app de mensajería. Escribes tu mensaje, la IA te responde al instante, y toda la conversación queda guardada en tu propio equipo — nada se envía a servidores externos salvo lo necesario para generar la respuesta.
 
-## ✨ Características
+![Vista del chat](./public/header-inicial.png)
 
-- 🤖 **Chat con IA en tiempo real** - Streaming de respuestas con Groq API
-- 💾 **Persistencia local** - IndexedDB para chats y mensajes (sin servidor)
-- 🎨 **Interfaz moderna** - Diseño profesional con CSS global
-- ⚡ **Performance** - Server-side rendering + React island optimization
-- 📝 **Markdown support** - Respuestas formateadas con soporte para código
-- 🔍 **Búsqueda** - Busca en tu historial de chats
-- 🧪 **49 unit tests** - Cobertura completa con Vitest
+## ¿Qué puedes hacer con él?
 
-## 🚀 Quick Start
+- 🗨️ **Conversar con la IA en tiempo real** — las respuestas van apareciendo mientras se generan, como si alguien te estuviera escribiendo.
+- 🧠 **Elegir qué IA te responde** — puedes cambiar entre distintos modelos según lo que necesites.
+- 💾 **Guardar tus conversaciones** — cada chat queda almacenado en tu propio navegador, listo para retomarlo cuando quieras.
+- 🔍 **Buscar en tu historial** — encuentra rápido esa conversación de la semana pasada.
+- 📎 **Compartir archivos** — sube imágenes o datos y consúltalos dentro de la conversación.
+- 📊 **Recibir respuestas visuales, no solo texto** — cuando la pregunta lo pide, la IA abre una pequeña app interactiva dentro del propio chat (ver más abajo).
+- ⭐ **Marcar tus chats favoritos** — para tener a mano las conversaciones más importantes.
 
-### Requisitos
+## Respuestas que se convierten en mini-apps
 
-- Node.js 18+
-- pnpm (o npm/yarn)
-- [GROQ API Key](https://console.groq.com/)
+Hay preguntas que se entienden mejor viéndolas que leyéndolas: el precio de una criptomoneda, la previsión del tiempo, los datos de un viaje. Para esos casos, el chat no responde solo con texto — abre una pequeña aplicación interactiva justo dentro de la conversación, con los datos ya cargados.
 
-### Instalación
+Esto es posible gracias a MCP (*Model Context Protocol*), el estándar que permite que la IA se comunique con estas mini-apps y les pase la información necesaria al vuelo, como si la conversación "invocara" la app correcta en el momento justo.
 
-```bash
-git clone <repository-url>
-cd chat
-pnpm install
-echo "GROQ_API_KEY=your-api-key-here" > .env
-```
+Por ejemplo, si preguntas por el precio de una criptomoneda, en vez de un bloque de texto aparece una tarjeta interactiva con el dato:
 
-### Desarrollo
+![Widget de criptomonedas dentro del chat](./chatbot_widget/screen.png)
 
-```bash
-pnpm dev        # Dev server
-pnpm test:watch # Tests en vivo
-pnpm test:ui    # UI visual
-```
+Hoy en día existen mini-apps de este tipo para el clima, la hora, criptomonedas, viajes y gráficos de datos.
 
-## 📁 Estructura
+## Probarlo en tu ordenador
 
-```text
-chat/
-├── src/
-│   ├── components/react/    # Componentes React interactivos
-│   ├── lib/                 # Utilidades (db, session, markdown)
-│   ├── pages/               # Rutas y API endpoints
-│   └── layouts/             # Layouts Astro
-├── docs/                    # Documentación de diseño
-├── vitest.config.ts         # Tests configuration
-└── astro.config.mjs         # Astro configuration
-```
+1. Descarga el proyecto y entra en la carpeta.
+2. Instala lo necesario con `pnpm install`.
+3. Consigue una clave gratuita en [Groq](https://console.groq.com/) y guárdala en un archivo `.env`.
+4. Arranca la aplicación con `pnpm dev` y ábrela en tu navegador.
 
-## 🧪 Testing
+## Estado del proyecto
 
-49 unit tests con Vitest:
-
-```bash
-pnpm test              # Ejecutar tests
-pnpm test:watch        # Modo watch
-pnpm test:ui           # Interfaz visual
-pnpm test:coverage     # Reporte de cobertura
-```
-
-**Cobertura:**
-
-- session.ts - 11 tests
-- markdown.ts - 11 tests
-- db.ts - 21 tests
-- api/chat.ts - 6 tests
-
-## 🏗️ Stack Técnico
-
-| Componente | Tecnología |
-|-----------|-----------|
-| Framework | Astro 5 |
-| UI | React 19 |
-| Estado | Context + useReducer |
-| Persistencia | IndexedDB |
-| IA | Groq API |
-| Testing | Vitest + happy-dom |
-| CSS | Plain CSS |
-
-## 🔧 Comandos
-
-```bash
-pnpm dev               # Servidor de desarrollo
-pnpm build             # Build de producción
-pnpm test              # Ejecutar todos los tests
-pnpm test:watch        # Tests en watch mode
-pnpm test:ui           # UI visual de tests
-```
-
-## 📚 Documentación
-
-- [plan-implementacion-tecnico.md](./docs/plan-implementacion-tecnico.md) - Arquitectura
-- [plan-testing-vitest.md](./docs/plan-testing-vitest.md) - Testing
-- [CLAUDE.md](./CLAUDE.md) - Guía
-
-## 🚦 Estado
-
-**MVP Completo** ✅
-
-- [x] Chat con IA
-- [x] Persistencia local
-- [x] 49 unit tests
-- [x] Streaming en tiempo real
-- [x] Búsqueda en historial
-- [x] Documentación
+El proyecto está activo y en mejora continua. Ya funciona de principio a fin: conversación con IA, historial guardado, búsqueda y una interfaz cuidada.
 
 ---
 
-Desarrollado por [devlitu](https://github.com/devlitus) - ¡Contribuciones bienvenidas!
+Desarrollado por [devlitus](https://github.com/devlitus) — ¡las contribuciones son bienvenidas!
