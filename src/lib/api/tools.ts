@@ -41,25 +41,29 @@ async function webSearch(args: Record<string, unknown>): Promise<string> {
   const apiKey = import.meta.env.TAVILY_API_KEY ?? '';
   if (!apiKey) return 'Error: TAVILY_API_KEY no está configurado.';
 
-  const response = await fetchWithTimeout('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, max_results: 5, search_depth: 'basic' }),
-  });
+  try {
+    const response = await fetchWithTimeout('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, max_results: 5, search_depth: 'basic' }),
+    });
 
-  if (!response.ok) {
-    const err = await response.text();
-    return `Error en búsqueda web (${response.status}): ${err}`;
+    if (!response.ok) {
+      const err = await response.text();
+      return `Error en búsqueda web (${response.status}): ${err}`;
+    }
+
+    const data = await response.json() as { results?: { title?: string; url?: string; content?: string }[] };
+    const results = data.results ?? [];
+
+    if (results.length === 0) return 'No se encontraron resultados para la búsqueda.';
+
+    return results
+      .map((r, i) => `${i + 1}. **${r.title ?? 'Sin título'}**\n   URL: ${r.url ?? ''}\n   ${r.content ?? ''}`)
+      .join('\n\n');
+  } catch (e) {
+    return `Error en búsqueda web: ${e instanceof Error ? e.message : 'unknown'}`;
   }
-
-  const data = await response.json() as { results?: { title?: string; url?: string; content?: string }[] };
-  const results = data.results ?? [];
-
-  if (results.length === 0) return 'No se encontraron resultados para la búsqueda.';
-
-  return results
-    .map((r, i) => `${i + 1}. **${r.title ?? 'Sin título'}**\n   URL: ${r.url ?? ''}\n   ${r.content ?? ''}`)
-    .join('\n\n');
 }
 
 async function getWeather(args: Record<string, unknown>): Promise<string> {

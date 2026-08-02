@@ -94,36 +94,40 @@ async function webSearchDeep(args: Record<string, unknown>): Promise<string> {
   };
   if (args.time_range) body.time_range = args.time_range;
 
-  const response = await fetchWithTimeout('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  try {
+    const response = await fetchWithTimeout('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-  if (!response.ok) {
-    const err = await response.text();
-    return `Error en búsqueda avanzada (${response.status}): ${err}`;
+    if (!response.ok) {
+      const err = await response.text();
+      return `Error en búsqueda avanzada (${response.status}): ${err}`;
+    }
+
+    const data = await response.json() as {
+      results?: {
+        title?: string;
+        url?: string;
+        raw_content?: string;
+        content?: string;
+        score?: number;
+      }[];
+    };
+    const results = data.results ?? [];
+    if (results.length === 0) return 'No se encontraron resultados.';
+
+    return results
+      .map((r, i) => {
+        const content = r.raw_content ?? r.content ?? '';
+        const truncated = content.length > 3000 ? content.slice(0, 3000) + ' [truncado]' : content;
+        return `[Resultado ${i + 1}]\nTitulo: ${r.title ?? 'Sin título'}\nURL: ${r.url ?? ''}\nContenido: ${truncated}`;
+      })
+      .join('\n\n');
+  } catch (e) {
+    return `Error en búsqueda avanzada: ${e instanceof Error ? e.message : 'unknown'}`;
   }
-
-  const data = await response.json() as {
-    results?: {
-      title?: string;
-      url?: string;
-      raw_content?: string;
-      content?: string;
-      score?: number;
-    }[];
-  };
-  const results = data.results ?? [];
-  if (results.length === 0) return 'No se encontraron resultados.';
-
-  return results
-    .map((r, i) => {
-      const content = r.raw_content ?? r.content ?? '';
-      const truncated = content.length > 3000 ? content.slice(0, 3000) + ' [truncado]' : content;
-      return `[Resultado ${i + 1}]\nTitulo: ${r.title ?? 'Sin título'}\nURL: ${r.url ?? ''}\nContenido: ${truncated}`;
-    })
-    .join('\n\n');
 }
 
 async function fetchUrl(args: Record<string, unknown>): Promise<string> {
