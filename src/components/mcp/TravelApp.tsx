@@ -1,4 +1,7 @@
 import { useTravelData } from './travel/useTravelData';
+import { useStore } from '@nanostores/react';
+import { $selectedProvider, $selectedGroqModel } from '../../stores/chat-store';
+import { useEffect } from 'react';
 
 const styleId = '__travel-widget-keyframes';
 if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
@@ -382,6 +385,25 @@ export default function TravelApp() {
     suggestions, errorMsg, handleSubmit, setStep,
   } = useTravelData();
 
+  // Sincronizar el provider desde localStorage al montar (el iframe
+  // del MCP tiene su propia instancia del nanostore y no comparte
+  // estado con la página principal).
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedProvider');
+    const normalized = saved === 'ollama' ? 'local' : saved;
+    if (normalized === 'local' || normalized === 'groq') {
+      $selectedProvider.set(normalized);
+    }
+
+    const savedGroqModel = localStorage.getItem('selectedGroqModel');
+    if (savedGroqModel) {
+      $selectedGroqModel.set(savedGroqModel);
+    }
+  }, []);
+
+  const provider = useStore($selectedProvider);
+  const providerLabel = provider === 'groq' ? 'Groq' : 'IA local';
+
   const mi = (name: string, style?: React.CSSProperties) => (
     <span className="material-symbols-rounded" style={style}>{name}</span>
   );
@@ -397,7 +419,7 @@ export default function TravelApp() {
             </div>
             <div>
               <h2 style={s.titleGradient}>Planificador de Viajes</h2>
-              <p style={s.subtitle}>Datos de Wikivoyage &middot; IA local</p>
+              <p style={s.subtitle}>100% {providerLabel}</p>
             </div>
           </div>
 
@@ -508,7 +530,7 @@ export default function TravelApp() {
               </div>
               <div style={{ textAlign: 'center' }}>
                 <h3 style={s.loadingTitle}>Diseñando tu viaje ideal</h3>
-                <p style={s.loadingSub}>Explorando Wikivoyage...</p>
+                <p style={s.loadingSub}>Consultando {providerLabel}...</p>
               </div>
             </div>
           )}
@@ -565,7 +587,7 @@ export default function TravelApp() {
                 padding: '4px 0',
                 flexShrink: 0,
               }}>
-                Datos obtenidos de Wikivoyage &middot; Enriquecidos con IA local
+                Generado con {providerLabel}
               </div>
               <button
                 onClick={() => setStep('form')}

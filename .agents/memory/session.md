@@ -181,3 +181,38 @@ Se promovió la lección a `long-term/ui_and_styling.md`:
 - **Regla**: Todo fetch a servicios externos debe diferenciar códigos HTTP del upstream (429 → rate limit con retry + backoff, 503 → servicio no disponible, etc.) y propagar mensajes orientativos al cliente.
 - **Regla**: Usar `Retry-After` header cuando el upstream lo provee en respuestas 429.
 - **Regla**: Mapear tipos de error del upstream a códigos HTTP semánticamente correctos (ej: `ratelimit` → 503, no 502).
+
+## [2026-08-02 12:46] @ada | decisión
+
+**Refactor**: Eliminar Wikivoyage del pipeline de `/api/travel` → estrategia LLM-only
+**Rama**: refactor/tabiji-migration
+**Estado**: completado
+**Qué**: Refactorización radical de `src/pages/api/travel.ts` (610→202 líneas, -67%). Se elimina toda la dependencia de Wikivoyage REST API (search, extracts, assemble, fetchWithTimeout/Retry, classifyFetchError, buildFallbackSuggestions, 6 interfaces, 6 constantes). El nuevo pipeline es: Validar inputs → System Prompt (conocimiento interno) → LLM Local (AbortController directo) → Parseo JSON → isValidSuggestion → 200. Sin fallback — solo LLM local.
+**Por qué**: Wikivoyage sufría rate limiting (HTTP 429) y hacia el widget inútil. El LLM local responde en <5s con conocimiento interno real sobre destinos. Eliminar 400 líneas de código de red/error handling simplifica drásticamente el mantenimiento. Contrato `{ suggestions: TravelSuggestion[] }` sin cambios — `useTravelData.ts` y `TravelApp.tsx` intactos.
+**Archivos**: src/pages/api/travel.ts (reescrito)
+**Build**: `pnpm build` → PASS (7.60s) | **Tests**: `pnpm test` → 62/62 PASS, 0 regresiones
+
+## [2026-08-02 13:01] @nexus | fix
+
+**Bug**: POST /api/travel devuelve HTTP 502 con "El modelo de IA no está disponible" aunque LM Studio sí responde.
+**Rama**: refactor/travel-llm-only
+**Causa raíz**: `travel.ts` L151 usa `response_format: { type: 'json_object' }` que **no es soportado** por LM Studio con el modelo `google/gemma-4-12b-qat`. LM Studio devuelve HTTP 400: `'response_format.type' must be 'json_schema' or 'text'`. El código interpretaba `!llmRes.ok` como error genérico.
+**Fix**: 
+1. Se eliminó `response_format: { type: 'json_object' }` — el system prompt ya instruye al modelo a devolver JSON puro y el parser tiene doble intento (directo + limpieza markdown).
+2. Se aumentó `LLM_TIMEOUT_MS` de 25000 → 60000 porque Gemma es un modelo de razonamiento que gasta tokens en `reasoning_content` antes de generar `content`.
+**Verificación Playwright**: Widget de travel devuelve 3 sugerencias correctas para "Kyoto" (Esencia Tradicional, Serenidad en Arashiyama, Puertas Torii) con highlights, descripciones y precios.
+**Build**: `pnpm build` → PASS (7.18s) | **Tests**: `pnpm test` → 62/62 PASS, 0 regresiones
+**Archivos modificados**: `src/pages/api/travel.ts`
+
+## [2026-08-02 13:15] @nexus | feature
+
+**Feature**: /api/travel respeta el selector de provider (Local ↔ Groq)
+**Rama**: refactor/tabiji-migration
+**Estado**: completado
+**Qué**: El endpoint `/api/travel` ahora enruta al LLM según el provider seleccionado por el usuario en el `ProviderSelector` del `ChatHeader`. Antes siempre usaba LM Studio local, ignorando el selector.
+**Cambios**:
+1. `travel.ts` (+90 líneas): se añade `fetchGroqTravelSuggestions()` que usa el Groq SDK. Se extrae `parseLLMResponse()` compartido. El handler POST recibe `provider` y `groqModel` del body y enruta: `groq` → Groq Cloud, resto → LM Studio. Whitelist de modelos Groq idéntica a `/api/chat`. Timeout de 60s para ambos providers.
+2. `useTravelData.ts` (+2 líneas): lee `$selectedProvider` y `$selectedGroqModel` del nanostore y los envía en el body del POST.
+3. `TravelApp.tsx` (+3 líneas): textos dinámicos — subtítulo "100% Groq"/"100% IA local", loading "Consultando Groq..."/"Consultando IA local...", footer "Generado con Groq"/"Generado con IA local".
+**Build**: `pnpm build` → PASS (7.88s) | **Tests**: `pnpm test` → 62/62 PASS, 0 regresiones
+**Archivos**: `src/pages/api/travel.ts`, `src/components/mcp/travel/useTravelData.ts`, `src/components/mcp/TravelApp.tsx`

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { $selectedProvider, $selectedGroqModel } from '../../../stores/chat-store';
 
 interface TravelSuggestion {
   id: string; title: string; description: string;
@@ -21,9 +22,11 @@ export function useTravelData() {
     if (!destination.trim() || !days) return;
     setStep('loading'); setErrorMsg('');
     try {
+      const provider = $selectedProvider.get();
+      const groqModel = $selectedGroqModel.get();
       const res = await fetch('/api/travel', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination, budget, days, interests }),
+        body: JSON.stringify({ destination, budget, days, interests, provider, groqModel }),
       });
       if (!res.ok) {
         // Leer el mensaje de error real del servidor en vez de descartarlo
