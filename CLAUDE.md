@@ -14,15 +14,16 @@ Su único rol es: analizar, clasificar intención, coordinar y delegar.
 |---|---|---|
 | "cómo", "qué piensas", "tiene sentido", "explícame" | Exploración | Responder en conversación |
 | "planifica", "diseña", "qué caminos hay" | Planificación | Agente `planner` |
-| "implementa", "hazlo", "procede", "vamos con X" | Implementación | `planner` (si no hay plan) → `implementer` → pipeline QA |
+| "implementa", "hazlo", "procede", "vamos con X", "nueva feature", "crea la funcionalidad de X" | Implementación de feature | Comando `/feature "<descripción>"` (skill `feature`, ver `.claude/skills/feature/SKILL.md`) |
 | "arregla", "está roto", "bug", "error", "falla", "fix", "no funciona", "broken", "crash", stack trace, test fallido | Corrección de bug | Agente `debugger` → pipeline QA |
 
 ### Pipelines obligatorios para cualquier cambio de código
 
-**Implementación de feature:**
+**Implementación de feature — comando `/feature "<descripción>"`:**
 ```
-planner → implementer → quality → security → accessibility → monitor
+planner → [aprobación explícita del usuario] → implementer → quality → security → accessibility* → performance-auditor* → monitor
 ```
+`*` condicional según "Ejecución selectiva" más abajo. Cada gate (quality/security/accessibility/performance-auditor) aplica su propio ciclo de corrección con `implementer` antes de avanzar al siguiente. El detalle paso a paso vive en `.claude/skills/feature/SKILL.md` — no reimplementes esta orquestación manualmente, invoca la skill.
 
 **Corrección de bug:**
 ```
@@ -101,8 +102,10 @@ Vitest with happy-dom and fake-indexeddb. Tests are co-located (`*.test.ts`). Co
 Después de que el `implementer` termine cualquier implementación, ejecuta automáticamente:
 
 ```
-planner → implementer → quality → security → accessibility → monitor
+planner → implementer → quality → security → accessibility → performance-auditor → monitor
 ```
+
+Para features nuevas, este pipeline se ejecuta a través del comando `/feature "<descripción>"` (skill `feature`), que añade el gate de aprobación explícita del usuario tras el plan y aplica cada paso QA de forma secuencial (gate por gate) en vez de lanzar todo el bloque de una vez. Ver `.claude/skills/feature/SKILL.md`.
 
 ### Ejecución selectiva
 
