@@ -2,8 +2,6 @@
 
 Una aplicación web moderna de chat con IA construida con **Astro 5**, **React**, y **Groq API**. MVP funcional con persistencia local, streaming en tiempo real y diseño responsivo.
 
-![Chat AI Interface](./stitch_chatbot_interface/screen.png)
-
 ![Header con selector de modelo](./public/header-inicial.png)
 
 ## ✨ Características
