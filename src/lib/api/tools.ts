@@ -1,4 +1,6 @@
 import { evaluate } from 'mathjs';
+import { listFiles, readFile, writeFile } from './file-tools';
+import { listNotes, getNote, saveNote, deleteNote } from './notes-store';
 
 export interface ToolDefinition {
   type: 'function';
@@ -304,6 +306,103 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'read_file',
+      description: 'Lee un archivo de texto del workspace del agente (máx. 64 KB). Usa list_files primero si no conoces la ruta exacta.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Ruta relativa al workspace (ej: "notas/idea.txt").' },
+        },
+        required: ['path'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'write_file',
+      description: 'Escribe un archivo de texto en el workspace del agente, creando los directorios necesarios. Por defecto sobrescribe; usa append para anexar al final.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Ruta relativa al workspace (ej: "resumenes/semana.md").' },
+          content: { type: 'string', description: 'Contenido de texto a escribir (máx. 256 KB).' },
+          append: { type: 'boolean', description: 'Si es true, anexa al final en vez de sobrescribir.' },
+        },
+        required: ['path', 'content'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_files',
+      description: 'Lista los archivos y directorios del workspace del agente con tamaño y fecha de modificación.',
+      parameters: {
+        type: 'object',
+        properties: {
+          subdir: { type: 'string', description: 'Subdirectorio relativo a listar. Por defecto la raíz del workspace.' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'save_note',
+      description: 'Guarda una nota persistente que sobrevive entre conversaciones. Si ya existe una nota con el mismo título, se actualiza. Úsala cuando el usuario pida recordar algo.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Título de la nota (ej: "color favorito").' },
+          content: { type: 'string', description: 'Contenido de la nota (máx. 32 KB).' },
+        },
+        required: ['title', 'content'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_notes',
+      description: 'Lista las notas persistentes guardadas con su id, título, fecha y un preview del contenido.',
+      parameters: {
+        type: 'object',
+        properties: {},
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'read_note',
+      description: 'Lee el contenido completo de una nota persistente por su id o título exacto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          idOrTitle: { type: 'string', description: 'Id o título de la nota a leer.' },
+        },
+        required: ['idOrTitle'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'delete_note',
+      description: 'Borra una nota persistente por su id o título exacto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          idOrTitle: { type: 'string', description: 'Id o título de la nota a borrar.' },
+        },
+        required: ['idOrTitle'],
+      },
+    },
+  },
 ];
 
 const MAX_TOOL_RESULT_CHARS = 2000;
@@ -342,6 +441,20 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
       result = calculate(args); break;
     case 'get_crypto_prices':
       result = await getCryptoPrices(args); break;
+    case 'read_file':
+      result = await readFile(args); break;
+    case 'write_file':
+      result = await writeFile(args); break;
+    case 'list_files':
+      result = await listFiles(args); break;
+    case 'save_note':
+      result = await saveNote(args); break;
+    case 'list_notes':
+      result = await listNotes(); break;
+    case 'read_note':
+      result = await getNote(args); break;
+    case 'delete_note':
+      result = await deleteNote(args); break;
     case 'show_widget':
       throw new Error('show_widget debe ser interceptado antes de executeTool');
     default:

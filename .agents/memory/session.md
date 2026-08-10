@@ -216,3 +216,15 @@ Se promovió la lección a `long-term/ui_and_styling.md`:
 3. `TravelApp.tsx` (+3 líneas): textos dinámicos — subtítulo "100% Groq"/"100% IA local", loading "Consultando Groq..."/"Consultando IA local...", footer "Generado con Groq"/"Generado con IA local".
 **Build**: `pnpm build` → PASS (7.88s) | **Tests**: `pnpm test` → 62/62 PASS, 0 regresiones
 **Archivos**: `src/pages/api/travel.ts`, `src/components/mcp/travel/useTravelData.ts`, `src/components/mcp/TravelApp.tsx`
+
+
+## [2026-08-10 19:05] @nexus | wip
+
+**Feature**: feature/agent-file-notes-tools
+**Estado**: completado
+**Qué**: Añadidas 7 tools nuevas al agente del chat: `read_file`/`write_file`/`list_files` (workspace de archivos con sandbox anti path-traversal en `src/lib/api/file-tools.ts`) y `save_note`/`list_notes`/`read_note`/`delete_note` (notas persistentes en JSON en `src/lib/api/notes-store.ts`). Registradas en `TOOL_DEFINITIONS` y `executeTool` de `src/lib/api/tools.ts`, y documentadas en `src/lib/system-prompt.ts`.
+**Por qué**: El usuario pidió ampliar el agente existente (que ya tenía 6 tools) con lectura/escritura de archivos locales y memoria persistente de notas entre sesiones, sin añadir dependencias (store JSON en vez de DB).
+**Decisiones**: Env vars `AGENT_WORKSPACE_DIR` (def. ./workspace) y `AGENT_NOTES_FILE` (def. ./data/notes.json) leídas en tiempo de llamada (no cacheadas al import) para testabilidad con vi.stubEnv. Escritura atómica de notas vía tmp+rename. Límites: 64KB lectura, 256KB escritura, 100 notas / 32KB por nota.
+**Archivos**: src/lib/api/file-tools.ts (nuevo), src/lib/api/notes-store.ts (nuevo), src/lib/api/tools.ts, src/lib/system-prompt.ts, .env.example, .gitignore (/workspace/ /data/), src/lib/api/tools.test.ts (+12 tests)
+**Tests**: `pnpm test` → 78/78 PASS | **Build**: `pnpm build` → PASS
+**Limitación conocida**: notas son de la app (no por usuario, chat anónimo); en serverless (Vercel) el filesystem es efímero — pensado para adapter Node local.
