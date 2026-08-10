@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { $activeChatId, $isStreaming, $selectedModel } from '../../stores/chat-store';
+import { $activeChatId, $isStreaming, $selectedModel, $pendingInputText } from '../../stores/chat-store';
+import { clearPendingInputText } from '../../stores/chat-actions';
 import { useFileUpload } from './hooks/useFileUpload';
 import { useSendMessage } from './hooks/useSendMessage';
 import { PendingFileChip } from './input/PendingFileChip';
@@ -12,8 +13,10 @@ export function ChatInput() {
   const activeChatId = useStore($activeChatId);
   const isStreaming = useStore($isStreaming);
   const selectedModel = useStore($selectedModel);
+  const pendingInputText = useStore($pendingInputText);
   const [text, setText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { pendingFile, handleFileChange, clearPendingFile } =
     useFileUpload(activeChatId, isStreaming);
@@ -34,6 +37,35 @@ export function ChatInput() {
     }
   }, [sendMessage]);
 
+  // Inserta el texto reutilizado desde una burbuja de usuario en la
+  // posición del cursor (o al final si el textarea nunca tuvo foco), y
+  // recoloca el foco/cursor tras el re-render.
+  //
+  // El updater de setText solo calcula el nuevo valor de forma pura; el
+  // side-effect de DOM (focus/selección) se ejecuta fuera del callback,
+  // una vez conocida la posición de cursor resultante, para no violar la
+  // pureza esperada de los updaters funcionales de React.
+  useEffect(() => {
+    if (pendingInputText === null) return;
+    const textarea = textareaRef.current;
+    const isFocused = textarea != null && document.activeElement === textarea;
+
+    const cursor = { pos: 0 };
+    setText((prev) => {
+      const start = isFocused ? textarea!.selectionStart ?? prev.length : prev.length;
+      const end = isFocused ? textarea!.selectionEnd ?? prev.length : prev.length;
+      cursor.pos = start + pendingInputText.length;
+      return prev.slice(0, start) + pendingInputText + prev.slice(end);
+    });
+
+    requestAnimationFrame(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(cursor.pos, cursor.pos);
+    });
+
+    clearPendingInputText();
+  }, [pendingInputText]);
+
   return (
     <div className="chat-input-area">
       {pendingFile && (
@@ -47,7 +79,7 @@ export function ChatInput() {
         <ResearchToggle />
         <input type="file" ref={fileInputRef} hidden accept=".csv,.xlsx,.xls,.pdf,image/*"
           onChange={handleFileChange} />
-        <MessageTextarea value={text} onChange={e => setText(e.target.value)}
+        <MessageTextarea ref={textareaRef} value={text} onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown} />
         <div className="right-buttons">
           <button className="icon-btn" title="Usar micrófono" aria-label="Usar micrófono">

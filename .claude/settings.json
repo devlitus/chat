@@ -2,5 +2,18 @@
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-tech-debt.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }
