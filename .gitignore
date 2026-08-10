@@ -30,3 +30,7 @@ build-log.txt
 .claude/memory/
 
 .playwright-mcp/
+
+# artefactos de runtime del agente (workspace de archivos y notas)
+/workspace/
+/data/

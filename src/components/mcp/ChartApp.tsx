@@ -25,13 +25,10 @@ const s = {
   card: {
     position: 'relative' as const,
     width: '100%',
-    maxWidth: '800px',
     height: '100%',
     background: '#0b1221',
     borderRadius: '24px',
     padding: '3px',
-    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.2)',
-    border: '1px solid rgba(255,255,255,0.05)',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column' as const,
