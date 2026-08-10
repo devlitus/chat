@@ -8,7 +8,7 @@ const widgetConfig: Record<string, { title: string; height: string; width: strin
   '/weather-app': { title: 'Widget de clima', height: '480px', width: '360px' },
   '/crypto-app': { title: 'Widget de criptomonedas', height: '480px', width: '360px' },
   '/travel-app': { title: 'Widget de viajes', height: '520px', width: '640px' },
-  '/chart-app': { title: 'Widget de gráfico', height: '450px', width: '640px' },
+  '/chart-app': { title: 'Widget de gráfico', height: '450px', width: '100%' },
 };
 
 interface Props {
