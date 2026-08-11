@@ -1,16 +1,20 @@
+import { memo, useRef } from 'react';
 import type { Message } from '../../../lib/db';
 import { MessageAvatar } from './MessageAvatar';
 import { MessageMeta, formatTime } from './MessageMeta';
 import { AttachmentCard } from './AttachmentCard';
 import { parseFileMessage } from '../utils/parse-file-message';
+import { useReuseInInput } from './hooks/useReuseInInput';
 
 interface Props {
   message: Message;
 }
 
-export function UserMessage({ message }: Props) {
+function UserMessageImpl({ message }: Props) {
   const time = formatTime(message.createdAt);
   const { displayContent, attachmentData } = parseFileMessage(message.content);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const { onMouseDown, onClick } = useReuseInInput(bubbleRef, displayContent);
 
   return (
     <div className="message-user">
@@ -22,8 +26,20 @@ export function UserMessage({ message }: Props) {
             <AttachmentCard name={attachmentData.name} type={attachmentData.type} />
           )}
           {displayContent && (
-            <div className="bubble user-bubble">
-              <p>{displayContent}</p>
+            <div className="user-bubble-wrapper">
+              <div ref={bubbleRef} className="bubble user-bubble">
+                <p>{displayContent}</p>
+              </div>
+              <button
+                type="button"
+                className="reuse-btn"
+                title="Usar en el input"
+                aria-label="Usar este mensaje en el input"
+                onMouseDown={onMouseDown}
+                onClick={onClick}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">content_paste_go</span>
+              </button>
             </div>
           )}
         </div>
@@ -31,3 +47,8 @@ export function UserMessage({ message }: Props) {
     </div>
   );
 }
+
+// message es referencialmente estable mientras no cambie de contenido
+// (ver nota en MessageBubble.tsx), por lo que la comparación shallow
+// por defecto de memo evita re-ejecutar useReuseInInput/parseFileMessage.
+export const UserMessage = memo(UserMessageImpl);

@@ -1,4 +1,4 @@
-import { $initialized, $session, $chats, $activeChatId, $messages, $isStreaming, $streamingContent, $botError, $searchQuery, $researchProgress } from './chat-store';
+import { $initialized, $session, $chats, $activeChatId, $messages, $isStreaming, $streamingContent, $botError, $searchQuery, $researchProgress, $pendingInputText } from './chat-store';
 import type { Chat, Message } from '../lib/db';
 import type { UserSession } from '../lib/session';
 import type { ResearchProgressEvent } from '../lib/api/research-tools';
@@ -42,3 +42,7 @@ export function removeChatFromList(chatId: string): void { $chats.set($chats.get
 export function setResearchProgress(event: ResearchProgressEvent): void { $researchProgress.set(event); }
 
 export function clearResearchProgress(): void { $researchProgress.set(null); }
+
+export function requestInsertIntoInput(text: string): void { $pendingInputText.set(text); }
+
+export function clearPendingInputText(): void { $pendingInputText.set(null); }

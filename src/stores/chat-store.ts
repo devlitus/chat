@@ -22,3 +22,4 @@ export const $selectedProvider = atom<'local' | 'groq'>('local');
 export const $selectedGroqModel = atom<string>('llama-3.3-70b-versatile');
 export const $researchMode = atom<boolean>(false);
 export const $researchProgress = atom<ResearchProgressEvent | null>(null);
+export const $pendingInputText = atom<string | null>(null);
